@@ -23,11 +23,14 @@ APP_URL := https://health-ready-api.jhosedo.workers.dev
 WEB_FILTER := --filter @health-ready/web
 API_FILTER := --filter @health-ready/api
 
+# Default role for `make add-user` (override with ROLE=admin)
+ROLE ?= user
+
 .DEFAULT_GOAL := help
 
 .PHONY: help install typecheck test build dev dev-web login whoami \
         db-create migrate-generate db-migrate-local db-migrate \
-        secret-bootstrap deploy logs bootstrap-admin
+        secret-bootstrap deploy logs bootstrap-admin add-user
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -94,3 +97,17 @@ bootstrap-admin: ## Create the first prod admin. Usage: make bootstrap-admin EMA
 	curl -i $(APP_URL)/api/auth/bootstrap-admin \
 		-H 'content-type: application/json' \
 		-d '{"secret":"$(SECRET)","email":"$(EMAIL)","password":"$(PASSWORD)","displayName":"$(NAME)"}'
+
+add-user: ## Add a user (logs in as an admin first). Usage: make add-user ADMIN_EMAIL=.. ADMIN_PASSWORD=.. EMAIL=.. PASSWORD=.. NAME=".." [ROLE=admin]
+	@jar=$$(mktemp); \
+	code=$$(curl -s -o /dev/null -w '%{http_code}' -c $$jar -X POST $(APP_URL)/api/auth/login \
+		-H 'content-type: application/json' \
+		-d '{"email":"$(ADMIN_EMAIL)","password":"$(ADMIN_PASSWORD)"}'); \
+	if [ "$$code" != "200" ]; then \
+		echo "✗ admin login failed (HTTP $$code) — check ADMIN_EMAIL / ADMIN_PASSWORD"; rm -f $$jar; exit 1; \
+	fi; \
+	echo "→ creating $(ROLE) '$(EMAIL)'"; \
+	curl -i -b $$jar -X POST $(APP_URL)/api/users \
+		-H 'content-type: application/json' \
+		-d '{"email":"$(EMAIL)","password":"$(PASSWORD)","displayName":"$(NAME)","role":"$(ROLE)"}'; \
+	rm -f $$jar

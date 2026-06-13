@@ -19,6 +19,7 @@
 ## Task 1: Add CORS-with-credentials to the API
 
 **Files:**
+
 - Modify: `apps/api/worker-configuration.d.ts`
 - Modify: `apps/api/src/index.ts`
 - Modify: `apps/api/wrangler.toml`
@@ -30,7 +31,7 @@
 In `apps/api/worker-configuration.d.ts`, add `ALLOWED_ORIGIN` to the `Cloudflare.Env` interface (alongside `DB`, `BOOTSTRAP_SECRET`, `TEST_MIGRATIONS`):
 
 ```ts
-      ALLOWED_ORIGIN: string; // e.g. "http://localhost:5173" or "https://app.health-ready.app"
+ALLOWED_ORIGIN: string; // e.g. "http://localhost:5173" or "https://app.health-ready.app"
 ```
 
 - [ ] **Step 2: Add the binding for tests in `apps/api/vitest.config.ts`**
@@ -57,7 +58,9 @@ describe("CORS", () => {
       { headers: { origin: "http://localhost:5173" } },
       env,
     );
-    expect(res.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    expect(res.headers.get("access-control-allow-origin")).toBe(
+      "http://localhost:5173",
+    );
     expect(res.headers.get("access-control-allow-credentials")).toBe("true");
   });
 
@@ -74,7 +77,9 @@ describe("CORS", () => {
       env,
     );
     expect(res.status).toBe(204);
-    expect(res.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    expect(res.headers.get("access-control-allow-origin")).toBe(
+      "http://localhost:5173",
+    );
   });
 });
 ```
@@ -142,6 +147,7 @@ Expected: CORS PASS; all suites still green.
 ## Task 2: Scaffold the web app (Vite + React + PWA)
 
 **Files:**
+
 - Create: `apps/web/package.json`
 - Create: `apps/web/tsconfig.json`
 - Create: `apps/web/vite.config.ts`
@@ -202,7 +208,11 @@ Expected: CORS PASS; all suites still green.
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "types": ["vite/client", "vite-plugin-pwa/client", "@testing-library/jest-dom"]
+    "types": [
+      "vite/client",
+      "vite-plugin-pwa/client",
+      "@testing-library/jest-dom"
+    ]
   },
   "include": ["src"]
 }
@@ -250,7 +260,10 @@ export default defineConfig({
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Health Ready</title>
   </head>
   <body>
@@ -269,26 +282,112 @@ VITE_API_URL=http://localhost:8787
 - [ ] **Step 6: Create `apps/web/src/styles.css`**
 
 ```css
-:root { --bg:#0f172a; --panel:#1e293b; --fg:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --danger:#f87171; }
-* { box-sizing: border-box; }
-body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--fg); }
-.app { max-width: 640px; margin: 0 auto; padding: 1rem 1rem 5rem; }
-h1,h2,h3 { line-height: 1.2; }
-a { color: var(--accent); }
-button { font: inherit; padding:.6rem 1rem; border-radius:.5rem; border:0; background:var(--accent); color:#04293a; font-weight:600; }
-button.secondary { background:var(--panel); color:var(--fg); }
-button.danger { background:var(--danger); color:#3a0404; }
-button:disabled { opacity:.5; }
-input, select, textarea { font: inherit; width:100%; padding:.55rem; border-radius:.5rem; border:1px solid #334155; background:#0b1220; color:var(--fg); }
-label { display:block; margin:.5rem 0 .2rem; color:var(--muted); font-size:.85rem; }
-.card { background:var(--panel); border-radius:.75rem; padding:1rem; margin:.75rem 0; }
-.row { display:flex; gap:.5rem; align-items:center; }
-.row > * { flex:1; }
-.nav { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--panel); border-top:1px solid #334155; }
-.nav a { flex:1; text-align:center; padding:.8rem; text-decoration:none; color:var(--muted); }
-.nav a.active { color:var(--accent); }
-.error { color:var(--danger); }
-.muted { color:var(--muted); }
+:root {
+  --bg: #0f172a;
+  --panel: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --danger: #f87171;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem 1rem 5rem;
+}
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+}
+a {
+  color: var(--accent);
+}
+button {
+  font: inherit;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  border: 0;
+  background: var(--accent);
+  color: #04293a;
+  font-weight: 600;
+}
+button.secondary {
+  background: var(--panel);
+  color: var(--fg);
+}
+button.danger {
+  background: var(--danger);
+  color: #3a0404;
+}
+button:disabled {
+  opacity: 0.5;
+}
+input,
+select,
+textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.55rem;
+  border-radius: 0.5rem;
+  border: 1px solid #334155;
+  background: #0b1220;
+  color: var(--fg);
+}
+label {
+  display: block;
+  margin: 0.5rem 0 0.2rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.card {
+  background: var(--panel);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin: 0.75rem 0;
+}
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.row > * {
+  flex: 1;
+}
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--panel);
+  border-top: 1px solid #334155;
+}
+.nav a {
+  flex: 1;
+  text-align: center;
+  padding: 0.8rem;
+  text-decoration: none;
+  color: var(--muted);
+}
+.nav a.active {
+  color: var(--accent);
+}
+.error {
+  color: var(--danger);
+}
+.muted {
+  color: var(--muted);
+}
 ```
 
 - [ ] **Step 7: Create `apps/web/src/main.tsx`** (placeholder app; replaced in Task 4)
@@ -328,6 +427,7 @@ Expected: Vite serves on `http://localhost:5173` showing the "Health Ready" head
 ## Task 3: API client + response types + test setup
 
 **Files:**
+
 - Create: `apps/web/src/test/setup.ts`
 - Create: `apps/web/src/api/types.ts`
 - Create: `apps/web/src/api/client.ts`
@@ -342,7 +442,12 @@ import "@testing-library/jest-dom/vitest";
 - [ ] **Step 2: Create `apps/web/src/api/types.ts`** (response DTOs returned by the API)
 
 ```ts
-import type { ExerciseType, WeightUnit, LoadType, Role } from "@health-ready/shared";
+import type {
+  ExerciseType,
+  WeightUnit,
+  LoadType,
+  Role,
+} from "@health-ready/shared";
 
 export interface Exercise {
   id: string;
@@ -444,9 +549,13 @@ describe("api client", () => {
   it("throws ApiError with status on non-2xx", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 }),
-      ),
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ error: "unauthorized" }), {
+            status: 401,
+          }),
+        ),
     );
     await expect(api("/auth/me")).rejects.toMatchObject({ status: 401 });
     await expect(api("/auth/me")).rejects.toBeInstanceOf(ApiError);
@@ -517,6 +626,7 @@ Expected: PASS (both cases).
 ## Task 4: Auth (query/mutations, context, router, protected layout)
 
 **Files:**
+
 - Create: `apps/web/src/auth/useAuth.ts`
 - Create: `apps/web/src/auth/LoginPage.tsx`
 - Create: `apps/web/src/app/Layout.tsx`
@@ -551,7 +661,8 @@ export function useMe() {
 export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: LoginInput) => apiJson<PublicUser>("/auth/login", "POST", input),
+    mutationFn: (input: LoginInput) =>
+      apiJson<PublicUser>("/auth/login", "POST", input),
     onSuccess: (user) => qc.setQueryData(["me"], user),
   });
 }
@@ -601,11 +712,27 @@ export function LoginPage() {
       <h1>Health Ready</h1>
       <form onSubmit={onSubmit} className="card">
         <label htmlFor="email">Email</label>
-        <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
         <label htmlFor="password">Contraseña</label>
-        <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         {message && <p className="error">{message}</p>}
-        <button type="submit" disabled={login.isPending} style={{ marginTop: "1rem" }}>
+        <button
+          type="submit"
+          disabled={login.isPending}
+          style={{ marginTop: "1rem" }}
+        >
           {login.isPending ? "Entrando…" : "Entrar"}
         </button>
       </form>
@@ -642,17 +769,25 @@ export function Layout() {
       <div className="app">
         <div className="row" style={{ justifyContent: "space-between" }}>
           <h2 style={{ flex: "unset" }}>Health Ready</h2>
-          <button className="secondary" style={{ flex: "unset" }} onClick={() => logout.mutate()}>
+          <button
+            className="secondary"
+            style={{ flex: "unset" }}
+            onClick={() => logout.mutate()}
+          >
             Salir
           </button>
         </div>
         <Outlet />
       </div>
       <nav className="nav">
-        <NavLink to="/" end>Hoy</NavLink>
+        <NavLink to="/" end>
+          Hoy
+        </NavLink>
         <NavLink to="/history">Historial</NavLink>
         <NavLink to="/progress">Progreso</NavLink>
-        {me.data?.role === "admin" && <NavLink to="/exercises">Ejercicios</NavLink>}
+        {me.data?.role === "admin" && (
+          <NavLink to="/exercises">Ejercicios</NavLink>
+        )}
       </nav>
     </>
   );
@@ -746,7 +881,10 @@ describe("Protected", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("redirects to /login when unauthenticated", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 401 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("{}", { status: 401 })),
+    );
     renderAt("/");
     expect(await screen.findByText("login screen")).toBeInTheDocument();
   });
@@ -755,10 +893,18 @@ describe("Protected", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ id: "1", email: "a@e.com", displayName: "A", role: "user" }), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: "1",
+            email: "a@e.com",
+            displayName: "A",
+            role: "user",
+          }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        ),
       ),
     );
     renderAt("/");
@@ -781,6 +927,7 @@ Expected: PASS (both cases).
 ## Task 5: Exercise library hooks + admin UI
 
 **Files:**
+
 - Create: `apps/web/src/features/exercises/useExercises.ts`
 - Create: `apps/web/src/features/exercises/ExercisesAdminPage.tsx`
 
@@ -790,19 +937,24 @@ Expected: PASS (both cases).
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, apiJson } from "../../api/client";
 import type { Exercise } from "../../api/types";
-import type { CreateExerciseInput, UpdateExerciseInput } from "@health-ready/shared";
+import type {
+  CreateExerciseInput,
+  UpdateExerciseInput,
+} from "@health-ready/shared";
 
 export function useExercises(includeInactive = false) {
   return useQuery<Exercise[]>({
     queryKey: ["exercises", includeInactive],
-    queryFn: () => api(`/exercises${includeInactive ? "?includeInactive=true" : ""}`),
+    queryFn: () =>
+      api(`/exercises${includeInactive ? "?includeInactive=true" : ""}`),
   });
 }
 
 export function useCreateExercise() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateExerciseInput) => apiJson<Exercise>("/exercises", "POST", input),
+    mutationFn: (input: CreateExerciseInput) =>
+      apiJson<Exercise>("/exercises", "POST", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["exercises"] }),
   });
 }
@@ -830,7 +982,11 @@ export function useDeleteExercise() {
 ```tsx
 import { useState } from "react";
 import type { ExerciseType } from "@health-ready/shared";
-import { useExercises, useCreateExercise, useDeleteExercise } from "./useExercises";
+import {
+  useExercises,
+  useCreateExercise,
+  useDeleteExercise,
+} from "./useExercises";
 
 const TYPES: ExerciseType[] = ["strength", "cardio", "mobility"];
 
@@ -853,23 +1009,53 @@ export function ExercisesAdminPage() {
       <h3>Ejercicios</h3>
       <form onSubmit={add} className="card">
         <label>Nombre</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Press de banca" />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Press de banca"
+        />
         <label>Tipo</label>
-        <select value={type} onChange={(e) => setType(e.target.value as ExerciseType)}>
-          {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as ExerciseType)}
+        >
+          {TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
         </select>
-        <button type="submit" disabled={create.isPending} style={{ marginTop: ".75rem" }}>Agregar</button>
+        <button
+          type="submit"
+          disabled={create.isPending}
+          style={{ marginTop: ".75rem" }}
+        >
+          Agregar
+        </button>
       </form>
 
       {list.isLoading && <p className="muted">Cargando…</p>}
       {list.data?.map((ex) => (
-        <div key={ex.id} className="card row" style={{ justifyContent: "space-between" }}>
+        <div
+          key={ex.id}
+          className="card row"
+          style={{ justifyContent: "space-between" }}
+        >
           <div style={{ flex: 1 }}>
-            <strong style={{ opacity: ex.isActive ? 1 : 0.5 }}>{ex.name}</strong>
-            <div className="muted">{ex.type}{ex.isActive ? "" : " · inactivo"}</div>
+            <strong style={{ opacity: ex.isActive ? 1 : 0.5 }}>
+              {ex.name}
+            </strong>
+            <div className="muted">
+              {ex.type}
+              {ex.isActive ? "" : " · inactivo"}
+            </div>
           </div>
           {ex.isActive && (
-            <button className="danger" style={{ flex: "unset" }} onClick={() => del.mutate(ex.id)}>
+            <button
+              className="danger"
+              style={{ flex: "unset" }}
+              onClick={() => del.mutate(ex.id)}
+            >
               Desactivar
             </button>
           )}
@@ -889,6 +1075,7 @@ export function ExercisesAdminPage() {
 ## Task 6: Hybrid set logic + New Workout page
 
 **Files:**
+
 - Create: `apps/web/src/features/workouts/sets.ts`
 - Create: `apps/web/src/features/workouts/useWorkoutMutations.ts`
 - Create: `apps/web/src/features/workouts/EntryEditor.tsx`
@@ -909,17 +1096,46 @@ import { uniformToSets } from "./sets";
 
 describe("uniformToSets", () => {
   it("expands a uniform line into N identical sets", () => {
-    const out = uniformToSets({ count: 3, reps: 10, weight: 57, weightUnit: "kg", loadType: "total", barWeight: null });
+    const out = uniformToSets({
+      count: 3,
+      reps: 10,
+      weight: 57,
+      weightUnit: "kg",
+      loadType: "total",
+      barWeight: null,
+    });
     expect(out).toHaveLength(3);
-    expect(out.every((s) => s.reps === 10 && s.weight === 57 && s.loadType === "total")).toBe(true);
+    expect(
+      out.every(
+        (s) => s.reps === 10 && s.weight === 57 && s.loadType === "total",
+      ),
+    ).toBe(true);
   });
 
   it("clamps the count to at least 1", () => {
-    expect(uniformToSets({ count: 0, reps: 5, weight: null, weightUnit: null, loadType: "bodyweight", barWeight: null })).toHaveLength(1);
+    expect(
+      uniformToSets({
+        count: 0,
+        reps: 5,
+        weight: null,
+        weightUnit: null,
+        loadType: "bodyweight",
+        barWeight: null,
+      }),
+    ).toHaveLength(1);
   });
 
   it("caps the count to a sane maximum (20)", () => {
-    expect(uniformToSets({ count: 999, reps: 5, weight: 10, weightUnit: "kg", loadType: "total", barWeight: null })).toHaveLength(20);
+    expect(
+      uniformToSets({
+        count: 999,
+        reps: 5,
+        weight: 10,
+        weightUnit: "kg",
+        loadType: "total",
+        barWeight: null,
+      }),
+    ).toHaveLength(20);
   });
 });
 ```
@@ -977,7 +1193,8 @@ import type {
 export function useCreateWorkout() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateWorkoutInput) => apiJson<WorkoutDetail>("/workouts", "POST", input),
+    mutationFn: (input: CreateWorkoutInput) =>
+      apiJson<WorkoutDetail>("/workouts", "POST", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["workouts"] }),
   });
 }
@@ -985,7 +1202,8 @@ export function useCreateWorkout() {
 export function useUpdateWorkout(id: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpdateWorkoutInput) => apiJson<WorkoutDetail>(`/workouts/${id}`, "PATCH", input),
+    mutationFn: (input: UpdateWorkoutInput) =>
+      apiJson<WorkoutDetail>(`/workouts/${id}`, "PATCH", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["workouts"] });
       qc.invalidateQueries({ queryKey: ["workout", id] });
@@ -1015,10 +1233,21 @@ export function useDeleteWorkout() {
 
 ```tsx
 import { useState } from "react";
-import type { ExerciseType, WeightUnit, LoadType, EntryInput } from "@health-ready/shared";
+import type {
+  ExerciseType,
+  WeightUnit,
+  LoadType,
+  EntryInput,
+} from "@health-ready/shared";
 import { uniformToSets, type UniformLine } from "./sets";
 
-const LOAD_TYPES: LoadType[] = ["total", "per_side", "per_dumbbell", "bodyweight", "bodyweight_added"];
+const LOAD_TYPES: LoadType[] = [
+  "total",
+  "per_side",
+  "per_dumbbell",
+  "bodyweight",
+  "bodyweight_added",
+];
 
 export interface DraftEntry {
   exerciseId: string;
@@ -1038,7 +1267,9 @@ export function toEntryInput(d: DraftEntry): EntryInput {
     return {
       exerciseId: d.exerciseId,
       comment: d.comment || null,
-      durationSeconds: null, distance: null, distanceUnit: null,
+      durationSeconds: null,
+      distance: null,
+      distanceUnit: null,
       sets: uniformToSets(d.line),
     };
   }
@@ -1046,7 +1277,8 @@ export function toEntryInput(d: DraftEntry): EntryInput {
     return {
       exerciseId: d.exerciseId,
       comment: d.comment || null,
-      durationSeconds: d.durationMinutes != null ? d.durationMinutes * 60 : null,
+      durationSeconds:
+        d.durationMinutes != null ? d.durationMinutes * 60 : null,
       distance: d.distance,
       distanceUnit: d.distance != null ? d.distanceUnit : null,
       sets: [],
@@ -1056,7 +1288,9 @@ export function toEntryInput(d: DraftEntry): EntryInput {
   return {
     exerciseId: d.exerciseId,
     comment: d.comment || null,
-    durationSeconds: null, distance: null, distanceUnit: null,
+    durationSeconds: null,
+    distance: null,
+    distanceUnit: null,
     sets: [],
   };
 }
@@ -1071,13 +1305,16 @@ export function EntryEditor({
   onRemove: () => void;
 }) {
   const set = (patch: Partial<DraftEntry>) => onChange({ ...entry, ...patch });
-  const setLine = (patch: Partial<UniformLine>) => set({ line: { ...entry.line, ...patch } });
+  const setLine = (patch: Partial<UniformLine>) =>
+    set({ line: { ...entry.line, ...patch } });
 
   return (
     <div className="card">
       <div className="row" style={{ justifyContent: "space-between" }}>
         <strong style={{ flex: 1 }}>{entry.exerciseName}</strong>
-        <button className="danger" style={{ flex: "unset" }} onClick={onRemove}>Quitar</button>
+        <button className="danger" style={{ flex: "unset" }} onClick={onRemove}>
+          Quitar
+        </button>
       </div>
 
       {entry.exerciseType === "strength" && (
@@ -1085,41 +1322,81 @@ export function EntryEditor({
           <div className="row">
             <div>
               <label>Series</label>
-              <input type="number" min={1} value={entry.line.count}
-                onChange={(e) => setLine({ count: Number(e.target.value) })} />
+              <input
+                type="number"
+                min={1}
+                value={entry.line.count}
+                onChange={(e) => setLine({ count: Number(e.target.value) })}
+              />
             </div>
             <div>
               <label>Reps</label>
-              <input type="number" min={0} value={entry.line.reps ?? ""}
-                onChange={(e) => setLine({ reps: e.target.value === "" ? null : Number(e.target.value) })} />
+              <input
+                type="number"
+                min={0}
+                value={entry.line.reps ?? ""}
+                onChange={(e) =>
+                  setLine({
+                    reps: e.target.value === "" ? null : Number(e.target.value),
+                  })
+                }
+              />
             </div>
           </div>
           <div className="row">
             <div>
               <label>Peso</label>
-              <input type="number" step="0.5" value={entry.line.weight ?? ""}
+              <input
+                type="number"
+                step="0.5"
+                value={entry.line.weight ?? ""}
                 disabled={entry.line.loadType === "bodyweight"}
-                onChange={(e) => setLine({ weight: e.target.value === "" ? null : Number(e.target.value) })} />
+                onChange={(e) =>
+                  setLine({
+                    weight:
+                      e.target.value === "" ? null : Number(e.target.value),
+                  })
+                }
+              />
             </div>
             <div>
               <label>Unidad</label>
-              <select value={entry.line.weightUnit ?? "kg"}
-                onChange={(e) => setLine({ weightUnit: e.target.value as WeightUnit })}>
+              <select
+                value={entry.line.weightUnit ?? "kg"}
+                onChange={(e) =>
+                  setLine({ weightUnit: e.target.value as WeightUnit })
+                }
+              >
                 <option value="kg">kg</option>
                 <option value="lb">lb</option>
               </select>
             </div>
           </div>
           <label>Tipo de carga</label>
-          <select value={entry.line.loadType ?? "total"}
-            onChange={(e) => setLine({ loadType: e.target.value as LoadType })}>
-            {LOAD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          <select
+            value={entry.line.loadType ?? "total"}
+            onChange={(e) => setLine({ loadType: e.target.value as LoadType })}
+          >
+            {LOAD_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
           </select>
           {entry.line.loadType === "per_side" && (
             <>
               <label>Peso de la barra</label>
-              <input type="number" step="0.5" value={entry.line.barWeight ?? ""}
-                onChange={(e) => setLine({ barWeight: e.target.value === "" ? null : Number(e.target.value) })} />
+              <input
+                type="number"
+                step="0.5"
+                value={entry.line.barWeight ?? ""}
+                onChange={(e) =>
+                  setLine({
+                    barWeight:
+                      e.target.value === "" ? null : Number(e.target.value),
+                  })
+                }
+              />
             </>
           )}
         </>
@@ -1129,20 +1406,41 @@ export function EntryEditor({
         <div className="row">
           <div>
             <label>Minutos</label>
-            <input type="number" min={0} value={entry.durationMinutes ?? ""}
-              onChange={(e) => set({ durationMinutes: e.target.value === "" ? null : Number(e.target.value) })} />
+            <input
+              type="number"
+              min={0}
+              value={entry.durationMinutes ?? ""}
+              onChange={(e) =>
+                set({
+                  durationMinutes:
+                    e.target.value === "" ? null : Number(e.target.value),
+                })
+              }
+            />
           </div>
           <div>
             <label>Distancia</label>
-            <input type="number" step="0.1" value={entry.distance ?? ""}
-              onChange={(e) => set({ distance: e.target.value === "" ? null : Number(e.target.value) })} />
+            <input
+              type="number"
+              step="0.1"
+              value={entry.distance ?? ""}
+              onChange={(e) =>
+                set({
+                  distance:
+                    e.target.value === "" ? null : Number(e.target.value),
+                })
+              }
+            />
           </div>
         </div>
       )}
 
       <label>Comentario</label>
-      <input value={entry.comment} onChange={(e) => set({ comment: e.target.value })}
-        placeholder="sin lastre, volviendo de molestia…" />
+      <input
+        value={entry.comment}
+        onChange={(e) => set({ comment: e.target.value })}
+        placeholder="sin lastre, volviendo de molestia…"
+      />
     </div>
   );
 }
@@ -1171,7 +1469,14 @@ function draftFor(ex: Exercise): DraftEntry {
     exerciseName: ex.name,
     exerciseType: ex.type,
     comment: "",
-    line: { count: 3, reps: 10, weight: null, weightUnit: "kg", loadType: "total", barWeight: null },
+    line: {
+      count: 3,
+      reps: 10,
+      weight: null,
+      weightUnit: "kg",
+      loadType: "total",
+      barWeight: null,
+    },
     durationMinutes: null,
     distance: null,
     distanceUnit: "km",
@@ -1208,16 +1513,26 @@ export function NewWorkoutPage() {
       <h3>Nuevo entrenamiento</h3>
       <div className="card">
         <label>Fecha</label>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
         <label>Nombre (opcional)</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Rutina 3 / Pull day" />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Rutina 3 / Pull day"
+        />
       </div>
 
       {entries.map((entry, i) => (
         <EntryEditor
           key={i}
           entry={entry}
-          onChange={(e) => setEntries((prev) => prev.map((x, j) => (j === i ? e : x)))}
+          onChange={(e) =>
+            setEntries((prev) => prev.map((x, j) => (j === i ? e : x)))
+          }
           onRemove={() => setEntries((prev) => prev.filter((_, j) => j !== i))}
         />
       ))}
@@ -1226,11 +1541,19 @@ export function NewWorkoutPage() {
         <label>Agregar ejercicio</label>
         <select value={pick} onChange={(e) => addExercise(e.target.value)}>
           <option value="">— elegir —</option>
-          {exercises.data?.map((ex) => <option key={ex.id} value={ex.id}>{ex.name}</option>)}
+          {exercises.data?.map((ex) => (
+            <option key={ex.id} value={ex.id}>
+              {ex.name}
+            </option>
+          ))}
         </select>
       </div>
 
-      <button onClick={save} disabled={create.isPending || entries.length === 0} style={{ width: "100%" }}>
+      <button
+        onClick={save}
+        disabled={create.isPending || entries.length === 0}
+        style={{ width: "100%" }}
+      >
         {create.isPending ? "Guardando…" : "Guardar entrenamiento"}
       </button>
     </div>
@@ -1247,6 +1570,7 @@ export function NewWorkoutPage() {
 ## Task 7: History list, workout detail, copy & delete
 
 **Files:**
+
 - Create: `apps/web/src/features/history/useWorkouts.ts`
 - Create: `apps/web/src/features/history/HistoryPage.tsx`
 - Create: `apps/web/src/features/history/WorkoutDetailPage.tsx`
@@ -1282,16 +1606,23 @@ import { useWorkouts } from "./useWorkouts";
 export function HistoryPage() {
   const workouts = useWorkouts();
   if (workouts.isLoading) return <p className="muted">Cargando…</p>;
-  if (!workouts.data?.length) return <p className="muted">Aún no hay entrenamientos.</p>;
+  if (!workouts.data?.length)
+    return <p className="muted">Aún no hay entrenamientos.</p>;
   return (
     <div>
       <h3>Historial</h3>
       {workouts.data.map((w) => (
-        <Link key={w.id} to={`/workouts/${w.id}`} style={{ textDecoration: "none" }}>
+        <Link
+          key={w.id}
+          to={`/workouts/${w.id}`}
+          style={{ textDecoration: "none" }}
+        >
           <div className="card">
             <div className="row" style={{ justifyContent: "space-between" }}>
               <strong style={{ flex: 1 }}>{w.name ?? "Entrenamiento"}</strong>
-              <span className="muted" style={{ flex: "unset" }}>{w.date}</span>
+              <span className="muted" style={{ flex: "unset" }}>
+                {w.date}
+              </span>
             </div>
             <div className="muted">{w.entryCount} ejercicios</div>
           </div>
@@ -1308,9 +1639,18 @@ export function HistoryPage() {
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useWorkout } from "./useWorkouts";
-import { useCopyWorkout, useDeleteWorkout } from "../workouts/useWorkoutMutations";
+import {
+  useCopyWorkout,
+  useDeleteWorkout,
+} from "../workouts/useWorkoutMutations";
 
-function setLabel(s: { reps: number | null; weight: number | null; weightUnit: string | null; loadType: string | null; barWeight: number | null }): string {
+function setLabel(s: {
+  reps: number | null;
+  weight: number | null;
+  weightUnit: string | null;
+  loadType: string | null;
+  barWeight: number | null;
+}): string {
   const reps = s.reps != null ? `${s.reps} reps` : "";
   if (s.loadType === "bodyweight") return `${reps} (peso corporal)`.trim();
   if (s.weight == null) return reps;
@@ -1344,27 +1684,55 @@ export function WorkoutDetailPage() {
 
   return (
     <div>
-      <h3>{w.name ?? "Entrenamiento"} <span className="muted">· {w.date}</span></h3>
+      <h3>
+        {w.name ?? "Entrenamiento"} <span className="muted">· {w.date}</span>
+      </h3>
 
       {w.entries.map((e) => (
         <div key={e.id} className="card">
-          <strong>{/* exercise name resolved client-side via library if desired */}{e.exerciseId.slice(0, 0)}Ejercicio</strong>
+          <strong>
+            {/* exercise name resolved client-side via library if desired */}
+            {e.exerciseId.slice(0, 0)}Ejercicio
+          </strong>
           {e.comment && <div className="muted">{e.comment}</div>}
-          {e.sets.map((s) => <div key={s.id}>{setLabel(s)}</div>)}
-          {e.durationSeconds != null && <div>{Math.round(e.durationSeconds / 60)} min</div>}
-          {e.distance != null && <div>{e.distance} {e.distanceUnit}</div>}
+          {e.sets.map((s) => (
+            <div key={s.id}>{setLabel(s)}</div>
+          ))}
+          {e.durationSeconds != null && (
+            <div>{Math.round(e.durationSeconds / 60)} min</div>
+          )}
+          {e.distance != null && (
+            <div>
+              {e.distance} {e.distanceUnit}
+            </div>
+          )}
         </div>
       ))}
 
       <div className="card">
         <label>Copiar a la fecha</label>
         <div className="row">
-          <input type="date" value={copyDate} onChange={(e) => setCopyDate(e.target.value)} />
-          <button style={{ flex: "unset" }} disabled={!copyDate || copy.isPending} onClick={doCopy}>Copiar</button>
+          <input
+            type="date"
+            value={copyDate}
+            onChange={(e) => setCopyDate(e.target.value)}
+          />
+          <button
+            style={{ flex: "unset" }}
+            disabled={!copyDate || copy.isPending}
+            onClick={doCopy}
+          >
+            Copiar
+          </button>
         </div>
       </div>
 
-      <button className="danger" style={{ width: "100%" }} onClick={doDelete} disabled={del.isPending}>
+      <button
+        className="danger"
+        style={{ width: "100%" }}
+        onClick={doDelete}
+        disabled={del.isPending}
+      >
         Eliminar entrenamiento
       </button>
     </div>
@@ -1385,6 +1753,7 @@ export function WorkoutDetailPage() {
 ## Task 8: Resolve exercise names in the detail view
 
 **Files:**
+
 - Modify: `apps/web/src/features/history/WorkoutDetailPage.tsx`
 
 Replace the placeholder exercise label with a real name lookup from the library.
@@ -1402,14 +1771,14 @@ import { useExercises } from "../exercises/useExercises";
 Inside the component, after `const w = workout.data;`, add:
 
 ```tsx
-  const exercises = useExercises();
-  const nameById = new Map(exercises.data?.map((ex) => [ex.id, ex.name]) ?? []);
+const exercises = useExercises();
+const nameById = new Map(exercises.data?.map((ex) => [ex.id, ex.name]) ?? []);
 ```
 
 Then replace the placeholder `<strong>…Ejercicio</strong>` line with:
 
 ```tsx
-          <strong>{nameById.get(e.exerciseId) ?? "Ejercicio"}</strong>
+<strong>{nameById.get(e.exerciseId) ?? "Ejercicio"}</strong>
 ```
 
 - [ ] **Step 3: Typecheck**
@@ -1426,6 +1795,7 @@ Expected: PASS.
 ## Task 9: Progress charts
 
 **Files:**
+
 - Create: `apps/web/src/features/progress/useProgress.ts`
 - Create: `apps/web/src/features/progress/ProgressPage.tsx`
 
@@ -1450,7 +1820,13 @@ export function useProgress(exerciseId: string | null) {
 ```tsx
 import { useState } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 import { useExercises } from "../exercises/useExercises";
 import { useProgress } from "./useProgress";
@@ -1470,11 +1846,14 @@ export function ProgressPage() {
 
   const data = points.map((p) => ({
     date: p.date,
-    value: type === "cardio"
-      ? (p.maxDurationSeconds != null ? Math.round(p.maxDurationSeconds / 60) : 0)
-      : usesReps
-        ? (p.topReps ?? 0)
-        : (p.bestTotalLoadKg ?? 0),
+    value:
+      type === "cardio"
+        ? p.maxDurationSeconds != null
+          ? Math.round(p.maxDurationSeconds / 60)
+          : 0
+        : usesReps
+          ? (p.topReps ?? 0)
+          : (p.bestTotalLoadKg ?? 0),
   }));
 
   const yLabel = type === "cardio" ? "min" : usesReps ? "reps" : "kg";
@@ -1484,9 +1863,16 @@ export function ProgressPage() {
       <h3>Progreso</h3>
       <div className="card">
         <label>Ejercicio</label>
-        <select value={exerciseId ?? ""} onChange={(e) => setExerciseId(e.target.value || null)}>
+        <select
+          value={exerciseId ?? ""}
+          onChange={(e) => setExerciseId(e.target.value || null)}
+        >
           <option value="">— elegir —</option>
-          {exercises.data?.map((ex) => <option key={ex.id} value={ex.id}>{ex.name}</option>)}
+          {exercises.data?.map((ex) => (
+            <option key={ex.id} value={ex.id}>
+              {ex.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -1497,7 +1883,10 @@ export function ProgressPage() {
       {data.length > 0 && (
         <div className="card" style={{ height: 280 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <LineChart
+              data={data}
+              margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+            >
               <CartesianGrid stroke="#334155" />
               <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} />
               <YAxis stroke="#94a3b8" fontSize={11} />
@@ -1505,7 +1894,13 @@ export function ProgressPage() {
                 contentStyle={{ background: "#1e293b", border: "none" }}
                 formatter={(v: number) => [`${v} ${yLabel}`, ""]}
               />
-              <Line type="monotone" dataKey="value" stroke="#38bdf8" strokeWidth={2} dot />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#38bdf8"
+                strokeWidth={2}
+                dot
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -1543,6 +1938,7 @@ Terminal B: `pnpm --filter @health-ready/web dev` (serves `:5173`)
 If you haven't bootstrapped an admin yet, run the curl from Phase 1, Task 12, Step 2 against `:8787`.
 
 In the browser at `http://localhost:5173`:
+
 1. Log in with your admin credentials → lands on "Nuevo entrenamiento".
 2. Go to **Ejercicios**, add a few (e.g. "Dominada"/strength, "Caminar"/cardio).
 3. Back on **Hoy**, pick a date, add exercises, fill sets, **Guardar** → redirected to the detail view.

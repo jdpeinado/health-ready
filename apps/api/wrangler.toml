@@ -3,6 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2026-06-13"
 compatibility_flags = ["nodejs_compat"]
 
+[vars]
+ALLOWED_ORIGIN = "http://localhost:5173"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "health-ready"

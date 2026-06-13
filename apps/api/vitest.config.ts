@@ -11,6 +11,7 @@ export default defineConfig({
         bindings: {
           TEST_MIGRATIONS: await readD1Migrations(path.join(__dirname, "migrations")),
           BOOTSTRAP_SECRET: "test-secret",
+          ALLOWED_ORIGIN: "http://localhost:5173",
         },
       },
       wrangler: { configPath: "./wrangler.toml" },

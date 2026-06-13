@@ -8,6 +8,7 @@ declare global {
     interface Env {
       DB: D1Database;
       BOOTSTRAP_SECRET: string;
+      ALLOWED_ORIGIN: string; // e.g. "http://localhost:5173" or "https://app.health-ready.app"
       // Test-only: injected by the vitest pool (see vitest.config.ts). Unused in production.
       TEST_MIGRATIONS: D1Migration[];
     }

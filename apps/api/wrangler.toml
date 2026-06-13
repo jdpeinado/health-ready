@@ -9,5 +9,5 @@ ALLOWED_ORIGIN = "http://localhost:5173"
 [[d1_databases]]
 binding = "DB"
 database_name = "health-ready"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "e7e03fa6-f8b4-4343-8716-c2053e31e8e0"
 migrations_dir = "migrations"

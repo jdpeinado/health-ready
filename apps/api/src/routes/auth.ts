@@ -15,11 +15,16 @@ import {
 
 // Secure is required in production (HTTPS) but must be off for local `wrangler dev`
 // over http, otherwise clients (curl, browsers) won't return the cookie.
+// In production the web app (*.pages.dev) and API (*.workers.dev) are on different
+// registrable domains, so the session cookie must be SameSite=None to be sent on
+// credentialed cross-site requests — and browsers only accept SameSite=None with
+// Secure. Locally (http) we fall back to Lax so the cookie works over plain http.
 function cookieOpts(c: { req: { url: string } }) {
+  const isHttps = new URL(c.req.url).protocol === "https:";
   return {
     httpOnly: true,
-    secure: new URL(c.req.url).protocol === "https:",
-    sameSite: "Lax",
+    secure: isHttps,
+    sameSite: isHttps ? "None" : "Lax",
     path: "/",
   } as const;
 }

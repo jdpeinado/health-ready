@@ -1,4 +1,4 @@
-import type { D1Database, D1Migration } from "@cloudflare/workers-types";
+import type { D1Database, D1Migration, Fetcher } from "@cloudflare/workers-types";
 
 // Bindings are declared on the global `Cloudflare.Env` interface — the convention
 // `wrangler types` and `@cloudflare/vitest-pool-workers` both rely on (the test
@@ -9,6 +9,9 @@ declare global {
       DB: D1Database;
       BOOTSTRAP_SECRET: string;
       ALLOWED_ORIGIN: string; // e.g. "http://localhost:5173" or "https://app.health-ready.app"
+      // Static-asset binding: serves the built web app (apps/web/dist) so the SPA and
+      // API live on one origin (first-party session cookie — required for iOS Safari).
+      ASSETS: Fetcher;
       // Test-only: injected by the vitest pool (see vitest.config.ts). Unused in production.
       TEST_MIGRATIONS: D1Migration[];
     }

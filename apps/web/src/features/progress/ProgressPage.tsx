@@ -1,13 +1,14 @@
 import { useState } from "react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { LineChart as LineChartIcon, TrendingUp } from "lucide-react";
 import { useExercises } from "../exercises/useExercises";
 import { useProgress } from "./useProgress";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const AMBER = "#f0923c";
+
+function StatTile({ label, value, unit }: { label: string; value: string; unit: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card/60 p-4">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 font-mono text-2xl font-bold tabular-nums">
+        {value}
+        <span className="ml-1 text-sm font-medium text-muted-foreground">
+          {unit}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export function ProgressPage() {
   const exercises = useExercises();
@@ -46,13 +63,23 @@ export function ProgressPage() {
   }));
 
   const yLabel = type === "cardio" ? "min" : usesReps ? "reps" : "kg";
+  const values = data.map((d) => d.value);
+  const latest = values.length ? values[values.length - 1]! : 0;
+  const peak = values.length ? Math.max(...values) : 0;
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-xl font-semibold">Progreso</h3>
+    <div className="animate-rise space-y-6">
+      <header className="space-y-1.5">
+        <p className="eyebrow">Tu evolución</p>
+        <h1 className="page-title">Progreso</h1>
+      </header>
+
       <Card>
-        <CardContent className="space-y-1.5 pt-6">
-          <Label>Ejercicio</Label>
+        <CardContent className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <TrendingUp className="size-3.5" />
+            Ejercicio
+          </Label>
           <Select
             value={exerciseId ?? undefined}
             onValueChange={(v) => setExerciseId(v || null)}
@@ -71,38 +98,91 @@ export function ProgressPage() {
         </CardContent>
       </Card>
 
-      {progress.isLoading && exerciseId && (
-        <p className="text-muted-foreground">Cargando…</p>
+      {!exerciseId && (
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-card/30 px-6 py-16 text-center">
+          <span className="grid size-12 place-items-center rounded-full bg-secondary text-muted-foreground">
+            <LineChartIcon className="size-5" />
+          </span>
+          <p className="text-sm font-medium text-foreground">
+            Elige un ejercicio
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Verás tu progreso a lo largo del tiempo.
+          </p>
+        </div>
       )}
+
+      {progress.isLoading && exerciseId && (
+        <div className="h-72 animate-pulse rounded-2xl border border-border bg-card/50" />
+      )}
+
       {exerciseId && data.length === 0 && !progress.isLoading && (
         <p className="text-muted-foreground">Sin datos todavía.</p>
       )}
+
       {data.length > 0 && (
-        <Card>
-          <CardContent className="h-[280px] pt-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={data}
-                margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
-              >
-                <CartesianGrid stroke="#334155" />
-                <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} />
-                <YAxis stroke="#94a3b8" fontSize={11} />
-                <Tooltip
-                  contentStyle={{ background: "#1e293b", border: "none" }}
-                  formatter={(v: number) => [`${v} ${yLabel}`, ""]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#38bdf8"
-                  strokeWidth={2}
-                  dot
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <StatTile label="Actual" value={String(latest)} unit={yLabel} />
+            <StatTile label="Mejor marca" value={String(peak)} unit={yLabel} />
+            <StatTile label="Sesiones" value={String(data.length)} unit="" />
+          </div>
+
+          <Card>
+            <CardContent className="h-[320px] pr-2 pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={data}
+                  margin={{ top: 12, right: 8, left: -12, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="fillAmber" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={AMBER} stopOpacity={0.35} />
+                      <stop offset="100%" stopColor={AMBER} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    stroke="rgba(255,255,255,0.07)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#8b857c"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="#8b857c"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    cursor={{ stroke: AMBER, strokeOpacity: 0.3 }}
+                    contentStyle={{
+                      background: "#262320",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "0.75rem",
+                      fontSize: "0.8rem",
+                    }}
+                    labelStyle={{ color: "#8b857c" }}
+                    formatter={(v: number) => [`${v} ${yLabel}`, ""]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke={AMBER}
+                    strokeWidth={2.5}
+                    fill="url(#fillAmber)"
+                    dot={{ fill: AMBER, r: 3 }}
+                    activeDot={{ r: 5 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import type {
   ExerciseType,
   WeightUnit,
@@ -5,7 +6,6 @@ import type {
   EntryInput,
 } from "@health-ready/shared";
 import { uniformToSets, type UniformLine } from "./sets";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +24,20 @@ const LOAD_TYPES: LoadType[] = [
   "bodyweight",
   "bodyweight_added",
 ];
+
+const LOAD_TYPE_LABELS: Record<LoadType, string> = {
+  total: "Total",
+  per_side: "Por lado",
+  per_dumbbell: "Por mancuerna",
+  bodyweight: "Peso corporal",
+  bodyweight_added: "Corporal + lastre",
+};
+
+const TYPE_LABELS: Record<ExerciseType, string> = {
+  strength: "Fuerza",
+  cardio: "Cardio",
+  mobility: "Movilidad",
+};
 
 export interface DraftEntry {
   exerciseId: string;
@@ -73,10 +87,12 @@ export function toEntryInput(d: DraftEntry): EntryInput {
 
 export function EntryEditor({
   entry,
+  index,
   onChange,
   onRemove,
 }: {
   entry: DraftEntry;
+  index: number;
   onChange: (e: DraftEntry) => void;
   onRemove: () => void;
 }) {
@@ -86,15 +102,30 @@ export function EntryEditor({
   const numOrNull = (v: string) => (v === "" ? null : Number(v));
 
   return (
-    <Card>
-      <CardContent className="space-y-3 pt-6">
-        <div className="flex items-center justify-between gap-2">
-          <strong className="font-medium">{entry.exerciseName}</strong>
-          <Button variant="destructive" size="sm" onClick={onRemove}>
-            Quitar
-          </Button>
+    <Card className="gap-0 overflow-hidden py-0">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-border bg-secondary/40 px-4 py-3">
+        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/15 font-mono text-xs font-bold text-primary">
+          {index}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-display font-bold leading-tight">
+            {entry.exerciseName}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {TYPE_LABELS[entry.exerciseType]}
+          </div>
         </div>
+        <button
+          onClick={onRemove}
+          aria-label="Quitar ejercicio"
+          className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
+        >
+          <X className="size-4" />
+        </button>
+      </div>
 
+      <CardContent className="space-y-3 py-4">
         {entry.exerciseType === "strength" && (
           <>
             <div className="grid grid-cols-2 gap-3">
@@ -160,7 +191,7 @@ export function EntryEditor({
                 <SelectContent>
                   {LOAD_TYPES.map((t) => (
                     <SelectItem key={t} value={t}>
-                      {t}
+                      {LOAD_TYPE_LABELS[t]}
                     </SelectItem>
                   ))}
                 </SelectContent>

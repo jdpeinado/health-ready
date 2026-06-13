@@ -1,0 +1,11 @@
+{
+  "name": "health-ready",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "build:shared": "pnpm --filter @health-ready/shared build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

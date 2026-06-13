@@ -2,3 +2,7 @@ node_modules
 .wrangler
 dist
 .dev.vars
+*.log
+.DS_Store
+apps/api/.wrangler
+coverage

@@ -1,0 +1,30 @@
+{
+  "name": "@health-ready/api",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply health-ready --local",
+    "db:migrate:remote": "wrangler d1 migrations apply health-ready --remote"
+  },
+  "dependencies": {
+    "@health-ready/shared": "workspace:*",
+    "@hono/zod-validator": "^0.4.1",
+    "drizzle-orm": "^0.36.4",
+    "hono": "^4.6.13",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.16.15",
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "drizzle-kit": "^0.28.1",
+    "typescript": "^5.7.2",
+    "vite": "^6",
+    "vitest": "4.1.8",
+    "wrangler": "^4.100.0"
+  }
+}

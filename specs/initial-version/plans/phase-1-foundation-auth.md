@@ -150,7 +150,8 @@ coverage
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": { "zod": "^3.23.8" }
+  "dependencies": { "zod": "^3.23.8" },
+  "devDependencies": { "typescript": "^5.7.2" }
 }
 ```
 
@@ -269,12 +270,13 @@ Expected: installs deps, typecheck passes with no errors.
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.5.40",
-    "@cloudflare/workers-types": "^4.20241127.0",
+    "@cloudflare/vitest-pool-workers": "^0.16.15",
+    "@cloudflare/workers-types": "^4.20260613.1",
     "drizzle-kit": "^0.28.1",
     "typescript": "^5.7.2",
-    "vitest": "2.1.8",
-    "wrangler": "^3.91.0"
+    "vite": "^6",
+    "vitest": "^4.1.8",
+    "wrangler": "^4.100.0"
   }
 }
 ```
@@ -285,7 +287,7 @@ Expected: installs deps, typecheck passes with no errors.
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers"],
+    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers/types"],
     "jsx": "react-jsx",
     "noEmit": true
   },
@@ -298,7 +300,7 @@ Expected: installs deps, typecheck passes with no errors.
 ```toml
 name = "health-ready-api"
 main = "src/index.ts"
-compatibility_date = "2024-11-01"
+compatibility_date = "2026-06-13"
 compatibility_flags = ["nodejs_compat"]
 
 [[d1_databases]]
@@ -313,19 +315,24 @@ migrations_dir = "migrations"
 - [ ] **Step 4: Create `apps/api/worker-configuration.d.ts`**
 
 ```ts
-import type { D1Database } from "@cloudflare/workers-types";
+import type { D1Database, D1Migration } from "@cloudflare/workers-types";
 
-export interface Env {
-  DB: D1Database;
-  BOOTSTRAP_SECRET: string;
-}
-
-// Types for the cloudflare:test module used by vitest-pool-workers.
-declare module "cloudflare:test" {
-  interface ProvidedEnv extends Env {
-    TEST_MIGRATIONS: import("@cloudflare/workers-types").D1Migration[];
+// Bindings are declared on the global `Cloudflare.Env` interface — the convention
+// `wrangler types` and `@cloudflare/vitest-pool-workers` (v0.16+/vitest 4) both rely
+// on (the test pool types `env` as `Cloudflare.Env`).
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      DB: D1Database;
+      BOOTSTRAP_SECRET: string;
+      // Test-only: injected by the vitest pool (see vitest.config.ts). Unused in production.
+      TEST_MIGRATIONS: D1Migration[];
+    }
   }
 }
+
+// Re-exported so app code can `import type { Env }` for Hono `Bindings`.
+export type Env = Cloudflare.Env;
 ```
 
 - [ ] **Step 5: Create `apps/api/src/index.ts` (minimal app)**
@@ -503,43 +510,43 @@ Expected: a file like `apps/api/migrations/0000_*.sql` is created containing `CR
 - [ ] **Step 2: Create `apps/api/vitest.config.ts`**
 
 ```ts
-import {
-  defineWorkersProject,
-  readD1Migrations,
-} from "@cloudflare/vitest-pool-workers/config";
+import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-pool-workers";
+import { defineConfig } from "vitest/config";
 import path from "node:path";
 
-export default defineWorkersProject(async () => {
-  const migrations = await readD1Migrations(path.join(__dirname, "migrations"));
-  return {
-    test: {
-      setupFiles: ["./test/apply-migrations.ts"],
-      poolOptions: {
-        workers: {
-          singleWorker: true,
-          isolatedStorage: true,
-          miniflare: {
-            compatibilityFlags: ["nodejs_compat"],
-            d1Databases: { DB: "health-ready" },
-            bindings: {
-              TEST_MIGRATIONS: migrations,
-              BOOTSTRAP_SECRET: "test-secret",
-            },
-          },
-          wrangler: { configPath: "./wrangler.toml" },
+// vitest-pool-workers v0.16+ (vitest 4) uses the `cloudflareTest()` Vite plugin
+// instead of the old `defineWorkersProject` / `poolOptions.workers` shape.
+export default defineConfig({
+  plugins: [
+    cloudflareTest(async () => ({
+      miniflare: {
+        compatibilityFlags: ["nodejs_compat"],
+        d1Databases: { DB: "health-ready" },
+        bindings: {
+          TEST_MIGRATIONS: await readD1Migrations(path.join(__dirname, "migrations")),
+          BOOTSTRAP_SECRET: "test-secret",
         },
       },
-    },
-  };
+      wrangler: { configPath: "./wrangler.toml" },
+    })),
+  ],
+  test: {
+    setupFiles: ["./test/apply-migrations.ts"],
+  },
 });
 ```
+
+> Note: vitest 4's Workers pool isolates storage **per test file** (not per test — the
+> old `isolatedStorage`/`singleWorker` options were removed). Tests within a file share
+> one D1 database, so write tests with unique ids and don't assume a fresh DB between
+> `it` blocks in the same file.
 
 - [ ] **Step 3: Create `apps/api/test/apply-migrations.ts`**
 
 ```ts
 import { applyD1Migrations, env } from "cloudflare:test";
 
-// Applies all generated D1 migrations to the per-test isolated database.
+// Applies all generated D1 migrations to the per-test-file database.
 await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
 ```
 

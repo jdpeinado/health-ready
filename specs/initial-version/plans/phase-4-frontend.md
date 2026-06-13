@@ -27,14 +27,10 @@
 
 - [ ] **Step 1: Add `ALLOWED_ORIGIN` to the Env type**
 
-In `apps/api/worker-configuration.d.ts`, extend the `Env` interface:
+In `apps/api/worker-configuration.d.ts`, add `ALLOWED_ORIGIN` to the `Cloudflare.Env` interface (alongside `DB`, `BOOTSTRAP_SECRET`, `TEST_MIGRATIONS`):
 
 ```ts
-export interface Env {
-  DB: D1Database;
-  BOOTSTRAP_SECRET: string;
-  ALLOWED_ORIGIN: string; // e.g. "http://localhost:5173" or "https://app.health-ready.app"
-}
+      ALLOWED_ORIGIN: string; // e.g. "http://localhost:5173" or "https://app.health-ready.app"
 ```
 
 - [ ] **Step 2: Add the binding for tests in `apps/api/vitest.config.ts`**
@@ -189,8 +185,8 @@ Expected: CORS PASS; all suites still green.
     "typescript": "^5.7.2",
     "vite": "^6.0.1",
     "vite-plugin-pwa": "^0.21.1",
-    "vitest": "2.1.8",
-    "wrangler": "^3.91.0"
+    "vitest": "^4.1.8",
+    "wrangler": "^4.100.0"
   }
 }
 ```

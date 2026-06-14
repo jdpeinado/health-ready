@@ -11,6 +11,7 @@ import {
 import { LineChart as LineChartIcon, TrendingUp } from "lucide-react";
 import { useExercises } from "../exercises/useExercises";
 import { useProgress } from "./useProgress";
+import { roundKg } from "./format";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -59,7 +60,7 @@ export function ProgressPage() {
           : 0
         : usesReps
           ? (p.topReps ?? 0)
-          : (p.bestTotalLoadKg ?? 0),
+          : roundKg(p.bestTotalLoadKg ?? 0),
   }));
 
   const yLabel = type === "cardio" ? "min" : usesReps ? "reps" : "kg";

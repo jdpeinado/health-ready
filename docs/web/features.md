@@ -20,7 +20,11 @@ sign-in form.
 
 ## New Workout (`/`, "Hoy") — `features/workouts/NewWorkoutPage.tsx`
 
-The primary logging screen. Local component state holds a **draft** workout:
+The primary logging screen. `NewWorkoutPage` is a thin wrapper that renders the
+shared **`WorkoutForm`** (`features/workouts/WorkoutForm.tsx`) with an empty draft and
+wires `useCreateWorkout`; the same form powers
+[Edit Workout](#edit-workout-workoutsidedit--featuresworkoutseditworkoutpagetsx). The
+form holds a **draft** workout in local state:
 
 - `date` (defaults to today via `todayIso()`), optional `name`.
 - `entries: DraftEntry[]` — added by picking from the exercise `Select`.
@@ -77,13 +81,38 @@ Shows one workout in full, plus actions.
   - weighted → `"10 reps · 60kg"`, with ` + barra X` for bar weight and a suffix like
     `(por lado)` / `(por mancuerna)` / `(corporal + lastre)` based on `loadType`.
   - cardio entries instead render minutes and distance.
+- **Edit** — an "Editar entrenamiento" button links to `/workouts/:id/edit` (see
+  below).
 - **Copy** — pick a date and `useCopyWorkout()` duplicates the whole session to that
   date, then navigates to the new workout.
 - **Delete** — `useDeleteWorkout()` removes it and navigates back to `/history`.
 
-> Note: although the API supports editing (`PATCH /workouts/:id` and
-> `useUpdateWorkout`), this page exposes copy + delete; full in-place editing of an
-> existing workout is not wired into the detail UI.
+---
+
+## Edit Workout (`/workouts/:id/edit`) — `features/workouts/EditWorkoutPage.tsx`
+
+Edits an existing workout — change its date/name, edit each exercise's sets, and
+add/remove exercises.
+
+- Loads the workout with `useWorkout(id)` and the catalog with `useExercises()`, then
+  converts each saved entry into the editor's draft shape via `fromEntryDetail`
+  (the inverse of `toEntryInput`; collapses a strength entry's uniform sets back into
+  a single `UniformLine`).
+- Renders the shared **`WorkoutForm`** component (the same form used by New Workout
+  above), with the "Guardar cambios" label.
+- Saves via `useUpdateWorkout(id)` → `PATCH /workouts/:id`. Because `entries` is
+  present, the backend's `replaceWorkout` wipes and recreates all entries/sets. The
+  `notes` field is intentionally omitted from the payload so existing notes are
+  preserved (the form doesn't edit them). On success it navigates back to
+  `/workouts/:id`.
+- States mirror the detail page: "Cargando…" while loading, "No encontrado." if the
+  workout is missing. An entry whose exercise was deactivated/removed from the catalog
+  still loads (falls back to a placeholder name).
+
+> **Shared form:** both New Workout and Edit Workout render `WorkoutForm`, which owns
+> the date/name/entries draft state, the "Agregar ejercicio" picker, and the
+> draft→API mapping (`toEntryInput`). Saving an empty workout (zero entries) is
+> disabled in both, consistent with create.
 
 ---
 

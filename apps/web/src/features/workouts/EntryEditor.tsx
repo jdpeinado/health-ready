@@ -5,6 +5,7 @@ import type {
   LoadType,
   EntryInput,
 } from "@health-ready/shared";
+import type { EntryDetail } from "../../api/types";
 import { uniformToSets, type UniformLine } from "./sets";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,6 +83,37 @@ export function toEntryInput(d: DraftEntry): EntryInput {
     distance: null,
     distanceUnit: null,
     sets: [],
+  };
+}
+
+// Inverse of `toEntryInput`: turn a saved entry back into an editable draft.
+// Strength sets are collapsed into a single uniform line (the app only ever
+// creates uniform sets, so this round-trips cleanly).
+export function fromEntryDetail(
+  entry: EntryDetail,
+  exercise: { name: string; type: ExerciseType },
+): DraftEntry {
+  const first = entry.sets[0];
+  const line: UniformLine = {
+    count: entry.sets.length > 0 ? entry.sets.length : 1,
+    reps: first?.reps ?? null,
+    weight: first?.weight ?? null,
+    weightUnit: first?.weightUnit ?? "kg",
+    loadType: first?.loadType ?? "total",
+    barWeight: first?.barWeight ?? null,
+  };
+  return {
+    exerciseId: entry.exerciseId,
+    exerciseName: exercise.name,
+    exerciseType: exercise.type,
+    comment: entry.comment ?? "",
+    line,
+    durationMinutes:
+      entry.durationSeconds != null
+        ? Math.round(entry.durationSeconds / 60)
+        : null,
+    distance: entry.distance,
+    distanceUnit: entry.distanceUnit ?? "km",
   };
 }
 

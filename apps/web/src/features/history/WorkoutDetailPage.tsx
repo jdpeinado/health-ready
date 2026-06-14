@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, CalendarDays, Copy, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, Copy, Pencil, Trash2 } from "lucide-react";
 import { useWorkout } from "./useWorkouts";
 import { useExercises } from "../exercises/useExercises";
 import {
@@ -142,6 +142,13 @@ export function WorkoutDetailPage() {
 
         {/* Actions sidebar */}
         <aside className="space-y-4 lg:sticky lg:top-8 lg:self-start">
+          <Button asChild className="w-full">
+            <Link to={`/workouts/${id}/edit`}>
+              <Pencil className="size-4" />
+              Editar entrenamiento
+            </Link>
+          </Button>
+
           <Card>
             <CardContent className="space-y-2">
               <Label className="flex items-center gap-1.5">

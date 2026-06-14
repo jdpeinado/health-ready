@@ -12,6 +12,7 @@ layers around the pages:
     /                       → NewWorkoutPage        ("Hoy")
     /history                → HistoryPage
     /workouts/:id           → WorkoutDetailPage
+    /workouts/:id/edit      → EditWorkoutPage
     /progress               → ProgressPage
     /exercises              → ExercisesAdminPage    (admin-only nav item)
 ```
@@ -101,7 +102,7 @@ Key points:
 | `useWorkouts`                    | `features/history/useWorkouts.ts`          | `["workouts"]`                                | `GET /workouts`                                            |
 | `useWorkout(id)`                 | same                                       | `["workout", id]`                             | `GET /workouts/:id`                                        |
 | `useCreateWorkout`               | `features/workouts/useWorkoutMutations.ts` | invalidates `["workouts"]`                    | `POST /workouts`                                           |
-| `useUpdateWorkout(id)`           | same                                       | invalidates `["workouts"]`, `["workout", id]` | `PATCH /workouts/:id`                                      |
+| `useUpdateWorkout(id)`           | same                                       | invalidates `["workouts"]`, `["workout", id]` | `PATCH /workouts/:id` (used by `EditWorkoutPage`)          |
 | `useCopyWorkout`                 | same                                       | invalidates `["workouts"]`                    | `POST /workouts/:id/copy`                                  |
 | `useDeleteWorkout`               | same                                       | invalidates `["workouts"]`                    | `DELETE /workouts/:id`                                     |
 | `useProgress(exerciseId)`        | `features/progress/useProgress.ts`         | `["progress", exerciseId]`                    | `GET /progress/exercises/:id` (`enabled` only when id set) |

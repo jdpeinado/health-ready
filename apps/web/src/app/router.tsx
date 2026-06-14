@@ -3,6 +3,7 @@ import { Protected } from "./Protected";
 import { Layout } from "./Layout";
 import { LoginPage } from "../auth/LoginPage";
 import { NewWorkoutPage } from "../features/workouts/NewWorkoutPage";
+import { EditWorkoutPage } from "../features/workouts/EditWorkoutPage";
 import { HistoryPage } from "../features/history/HistoryPage";
 import { WorkoutDetailPage } from "../features/history/WorkoutDetailPage";
 import { ProgressPage } from "../features/progress/ProgressPage";
@@ -20,6 +21,7 @@ export const router: ReturnType<typeof createBrowserRouter> =
           { path: "/", element: <NewWorkoutPage /> },
           { path: "/history", element: <HistoryPage /> },
           { path: "/workouts/:id", element: <WorkoutDetailPage /> },
+          { path: "/workouts/:id/edit", element: <EditWorkoutPage /> },
           { path: "/progress", element: <ProgressPage /> },
           { path: "/exercises", element: <ExercisesAdminPage /> },
         ],

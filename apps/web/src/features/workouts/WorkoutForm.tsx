@@ -3,6 +3,8 @@ import { CalendarDays, Dumbbell, Plus, Save } from "lucide-react";
 import type { EntryInput } from "@health-ready/shared";
 import type { Exercise } from "../../api/types";
 import { useExercises } from "../exercises/useExercises";
+import { useMe } from "../../auth/useAuth";
+import { CreateExerciseDialog } from "../exercises/CreateExerciseDialog";
 import { EntryEditor, toEntryInput, type DraftEntry } from "./EntryEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,15 +78,24 @@ export function WorkoutForm({
   onSubmit,
 }: WorkoutFormProps) {
   const exercises = useExercises();
+  const me = useMe();
+  const isAdmin = me.data?.role === "admin";
   const [date, setDate] = useState(initialDate);
   const [name, setName] = useState(initialName);
   const [entries, setEntries] = useState<DraftEntry[]>(initialEntries);
   const [pick, setPick] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   function addExercise(id: string) {
     const ex = exercises.data?.find((e) => e.id === id);
     if (ex) setEntries((prev) => [...prev, draftFor(ex)]);
     setPick("");
+  }
+
+  // Add a just-created exercise directly from the returned object — no need to wait
+  // for the catalog query to refetch.
+  function addCreatedExercise(ex: Exercise) {
+    setEntries((prev) => [...prev, draftFor(ex)]);
   }
 
   function save() {
@@ -194,8 +205,27 @@ export function WorkoutForm({
               ))}
             </SelectContent>
           </Select>
+          {isAdmin && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-muted-foreground"
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus className="size-4" />
+              Crear ejercicio
+            </Button>
+          )}
         </CardContent>
       </Card>
+
+      {isAdmin && (
+        <CreateExerciseDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onCreated={addCreatedExercise}
+        />
+      )}
 
       {/* Save */}
       <div className="flex sm:justify-end">

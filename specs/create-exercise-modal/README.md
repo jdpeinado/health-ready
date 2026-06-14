@@ -1,7 +1,7 @@
 # Create Exercise from the Workout Form (Modal) — Spec
 
 **Date:** 2026-06-14
-**Status:** Planned
+**Status:** Implemented (2026-06-14)
 
 ## Purpose
 

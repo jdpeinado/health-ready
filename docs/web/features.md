@@ -28,6 +28,12 @@ form holds a **draft** workout in local state:
 
 - `date` (defaults to today via `todayIso()`), optional `name`.
 - `entries: DraftEntry[]` — added by picking from the exercise `Select`.
+- **Inline exercise creation (admin only):** when `useMe().data?.role === "admin"`,
+  a "Crear ejercicio" button appears under the picker and opens `CreateExerciseDialog`
+  (a vendored Radix `Dialog`). On success the exercise is created via
+  `useCreateExercise` and appended to the current draft immediately (from the returned
+  object, no refetch wait). Non-admins don't see the button; `POST /exercises` is also
+  `requireAdmin` server-side, so the gating is enforced, not just hidden.
 
 ### Draft model & the hybrid set entry
 

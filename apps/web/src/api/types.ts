@@ -62,6 +62,25 @@ export interface ExerciseProgress {
   points: ProgressPoint[];
 }
 
+export interface SparklinePoint {
+  date: string;
+  value: number;
+}
+
+export interface ProgressSummaryItem {
+  exerciseId: string;
+  name: string;
+  type: ExerciseType;
+  unit: "kg" | "reps" | "min";
+  points: SparklinePoint[];
+  latest: number;
+  peak: number;
+}
+
+export interface ProgressSummary {
+  items: ProgressSummaryItem[];
+}
+
 export interface PublicUser {
   id: string;
   email: string;

@@ -10,8 +10,9 @@ import {
 } from "recharts";
 import { LineChart as LineChartIcon, TrendingUp } from "lucide-react";
 import { useExercises } from "../exercises/useExercises";
-import { useProgress } from "./useProgress";
+import { useProgress, useProgressSummary } from "./useProgress";
 import { roundKg } from "./format";
+import { SparklineCard } from "./SparklineCard";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -40,8 +41,10 @@ function StatTile({ label, value, unit }: { label: string; value: string; unit: 
 
 export function ProgressPage() {
   const exercises = useExercises();
+  const summary = useProgressSummary();
   const [exerciseId, setExerciseId] = useState<string | null>(null);
   const progress = useProgress(exerciseId);
+  const previews = summary.data?.items ?? [];
 
   const points = progress.data?.points ?? [];
   const type = progress.data?.type;
@@ -99,16 +102,34 @@ export function ProgressPage() {
         </CardContent>
       </Card>
 
-      {!exerciseId && (
+      {previews.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
+            Resumen
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {previews.map((item) => (
+              <SparklineCard
+                key={item.exerciseId}
+                item={item}
+                selected={item.exerciseId === exerciseId}
+                onClick={() => setExerciseId(item.exerciseId)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!exerciseId && previews.length === 0 && !summary.isLoading && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-card/30 px-6 py-16 text-center">
           <span className="grid size-12 place-items-center rounded-full bg-secondary text-muted-foreground">
             <LineChartIcon className="size-5" />
           </span>
           <p className="text-sm font-medium text-foreground">
-            Elige un ejercicio
+            Aún no hay datos
           </p>
           <p className="text-sm text-muted-foreground">
-            Verás tu progreso a lo largo del tiempo.
+            Registra entrenamientos para ver tu progreso.
           </p>
         </div>
       )}

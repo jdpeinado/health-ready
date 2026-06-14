@@ -120,8 +120,13 @@ add/remove exercises.
 
 Per-exercise progress visualization with Recharts.
 
-- Pick an exercise (`useExercises()`); `useProgress(exerciseId)` fetches the time
-  series (only once an exercise is chosen).
+- **Preview grid** — `useProgressSummary()` (`GET /progress/summary`) returns one
+  lightweight sparkline series per exercise with data; the page renders them as a grid
+  of `SparklineCard`s (axis-less mini `AreaChart` + headline number). Clicking a card
+  selects that exercise. kg headline values are rounded to one decimal server-side.
+- Pick an exercise via a card or the `<Select>` (`useExercises()`);
+  `useProgress(exerciseId)` fetches the full time series for the detail chart (only
+  once an exercise is chosen).
 - **Metric selection** (matches the API's returned fields):
   - **cardio** → minutes (`maxDurationSeconds / 60`).
   - **strength where every point has `bestTotalLoadKg == null`** (bodyweight) →
@@ -130,8 +135,9 @@ Per-exercise progress visualization with Recharts.
     The y-axis unit label (`kg` / `reps` / `min`) follows the same logic.
 - Renders three stat tiles — **Actual** (latest value), **Mejor marca** (peak), and
   **Sesiones** (number of points) — above an amber gradient `AreaChart`.
-- States: prompt to choose an exercise; a pulsing skeleton while loading; "Sin datos
-  todavía." when the exercise has no recorded sessions.
+- States: the preview grid (or an "Aún no hay datos" empty state when nothing is
+  logged); a pulsing skeleton while a selected exercise's detail loads; "Sin datos
+  todavía." when the chosen exercise has no recorded sessions.
 
 See [Domain Concepts: progress metrics](../reference/domain-concepts.md#progress-metrics)
 for how the metrics are computed server-side.

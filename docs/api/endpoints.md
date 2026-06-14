@@ -308,3 +308,35 @@ metric is computed.
 
 `404 { "error": "not found" }` if the exercise id doesn't exist. If the exercise
 exists but the user has never done it, `points` is an empty array.
+
+### `GET /progress/summary`
+
+**Auth:** auth
+
+Returns a lightweight sparkline series for **every** exercise the caller has logged,
+in a single call — used to render the preview-card grid on the Progress page (the
+per-exercise endpoint above still backs the large detail chart). Each item collapses a
+workout to one headline metric chosen by the exercise's type:
+
+- **cardio** → `unit: "min"` (max duration in minutes)
+- **strength with any load** → `unit: "kg"` (best total load, rounded to one decimal)
+- **strength, all bodyweight** → `unit: "reps"` (top reps)
+
+Mobility exercises and exercises with no logged data are omitted. Items are sorted
+most-recently-trained first.
+
+```json
+{
+  "items": [
+    {
+      "exerciseId": "…",
+      "name": "Press banca",
+      "type": "strength",
+      "unit": "kg",
+      "points": [{ "date": "2026-06-01", "value": 80 }],
+      "latest": 80,
+      "peak": 80
+    }
+  ]
+}
+```

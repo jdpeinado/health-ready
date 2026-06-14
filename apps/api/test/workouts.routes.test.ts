@@ -53,6 +53,83 @@ describe("workouts routes", () => {
     expect(got.status).toBe(404);
   });
 
+  it("replaces all entries when PATCH includes an entries array", async () => {
+    const { cookie } = await seedUser();
+    const exId = await seedExercise();
+    const created = await post(cookie, body(exId, "2026-06-13"));
+    const w = await created.json<{ id: string }>();
+
+    const patched = await app.request(
+      `/workouts/${w.id}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json", cookie },
+        body: JSON.stringify({
+          date: "2026-06-13",
+          name: "Edited",
+          entries: [
+            {
+              exerciseId: exId,
+              comment: "de pie",
+              sets: [
+                { reps: 10, weight: 25, weightUnit: "lb", loadType: "total", barWeight: null },
+                { reps: 10, weight: 25, weightUnit: "lb", loadType: "total", barWeight: null },
+                { reps: 10, weight: 25, weightUnit: "lb", loadType: "total", barWeight: null },
+              ],
+            },
+          ],
+        }),
+      },
+      env,
+    );
+    expect(patched.status).toBe(200);
+    const detail = await patched.json<{ entries: { sets: unknown[] }[] }>();
+    expect(detail.entries).toHaveLength(1);
+    expect(detail.entries[0]?.sets).toHaveLength(3);
+  });
+
+  // Regression: D1 allows at most ~100 bound parameters per statement. A single
+  // multi-row INSERT of many entries/sets (8 columns each) exceeds that and used
+  // to 500 with "too many SQL variables". Inserts must be chunked.
+  it("creates a workout with more sets than D1's per-query variable limit", async () => {
+    const { cookie } = await seedUser();
+    const exId = await seedExercise();
+    const sets = Array.from({ length: 30 }, () => ({
+      reps: 10, weight: 25, weightUnit: "lb", loadType: "total", barWeight: null,
+    }));
+    const res = await post(cookie, {
+      date: "2026-06-13", name: "Big", notes: null,
+      entries: [{ exerciseId: exId, sets }],
+    });
+    expect(res.status).toBe(201);
+    const w = await res.json<{ entries: { sets: unknown[] }[] }>();
+    expect(w.entries[0]?.sets).toHaveLength(30);
+  });
+
+  it("replaces with more entries than D1's per-query variable limit", async () => {
+    const { cookie } = await seedUser();
+    const exId = await seedExercise();
+    const created = await post(cookie, body(exId, "2026-06-13"));
+    const w = await created.json<{ id: string }>();
+
+    const entries = Array.from({ length: 20 }, () => ({
+      exerciseId: exId,
+      sets: [{ reps: 10, weight: 25, weightUnit: "lb", loadType: "total", barWeight: null }],
+    }));
+    const patched = await app.request(
+      `/workouts/${w.id}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json", cookie },
+        body: JSON.stringify({ date: "2026-06-13", name: "Edited", entries }),
+      },
+      env,
+    );
+    expect(patched.status).toBe(200);
+    const detail = await patched.json<{ entries: unknown[] }>();
+    expect(detail.entries).toHaveLength(20);
+  });
+
   it("lists, updates, copies, and deletes", async () => {
     const { cookie } = await seedUser();
     const exId = await seedExercise();

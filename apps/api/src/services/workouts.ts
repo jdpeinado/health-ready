@@ -6,6 +6,18 @@ import type {
   UpdateWorkoutInput,
 } from "@health-ready/shared";
 
+// D1 allows at most ~100 bound parameters per SQL statement. `workout_entries`
+// and `sets` are inserted with 8 columns each, so a single multi-row INSERT of
+// more than ~12 rows exceeds the limit ("too many SQL variables"). Cap each
+// INSERT at 10 rows (80 params) and split larger sets across statements.
+const INSERT_CHUNK = 10;
+
+function chunk<T>(rows: T[], size = INSERT_CHUNK): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out;
+}
+
 export async function validateExerciseIds(db: Db, ids: string[]): Promise<string[]> {
   const unique = [...new Set(ids)];
   if (unique.length === 0) return [];
@@ -64,8 +76,8 @@ export async function createWorkout(
   const workoutId = crypto.randomUUID();
   const { workoutRow, entryRows, setRows } = buildInserts(workoutId, userId, input);
   const stmts: any[] = [db.insert(workouts).values(workoutRow)];
-  if (entryRows.length) stmts.push(db.insert(workoutEntries).values(entryRows));
-  if (setRows.length) stmts.push(db.insert(sets).values(setRows));
+  for (const c of chunk(entryRows)) stmts.push(db.insert(workoutEntries).values(c));
+  for (const c of chunk(setRows)) stmts.push(db.insert(sets).values(c));
   await db.batch(stmts as [any, ...any[]]);
   return workoutId;
 }
@@ -195,8 +207,8 @@ export async function replaceWorkout(
     const { entryRows, setRows } = buildInserts(workoutId, userId, {
       date: input.date ?? "2000-01-01", entries: input.entries,
     } as CreateWorkoutInput);
-    if (entryRows.length) stmts.push(db.insert(workoutEntries).values(entryRows));
-    if (setRows.length) stmts.push(db.insert(sets).values(setRows));
+    for (const c of chunk(entryRows)) stmts.push(db.insert(workoutEntries).values(c));
+    for (const c of chunk(setRows)) stmts.push(db.insert(sets).values(c));
   }
   if (stmts.length > 0) {
     await db.batch(stmts as [any, ...any[]]);

@@ -44,10 +44,11 @@ shape. Because the app only ever _creates_ uniform sets (via `uniformToSets`), t
 round-trips cleanly: derive `count` from the number of sets and read
 `reps`/`weight`/`weightUnit`/`loadType`/`barWeight` from the first set.
 
-**Known limitation (accepted):** if a workout somehow contained non-uniform sets
-(only possible by editing the DB/API directly — the UI never produces them), opening
-it in the editor and saving would re-uniform all its sets to match the first one.
-This is consistent with the app's uniform-sets model and is acceptable.
+**Update (per-set weights, 2026-06-14):** the original uniform-only round-trip was
+later replaced. `fromEntryDetail` now run-length groups a saved entry's sets into
+editable **set groups** (`setsToUniformLines`), so workouts with varying weights
+round-trip losslessly instead of collapsing to the first set. See
+[`specs/per-set-weights`](../per-set-weights/README.md).
 
 ## Approach (chosen)
 

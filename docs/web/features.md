@@ -40,24 +40,32 @@ form holds a **draft** workout in local state:
 Each `DraftEntry` (`features/workouts/EntryEditor.tsx`) adapts to the exercise's
 `type`:
 
-- **strength** — a single **`UniformLine`**: `count`, `reps`, `weight`,
-  `weightUnit`, `loadType`, `barWeight`. You describe the sets _once_ (e.g. 3 series
-  × 10 reps @ 60kg total) instead of typing each row.
+- **strength** — one or more **set groups** (`lines: SetGroup[]`). Each group is a
+  **`UniformLine`** (`count`, `reps`, `weight`, `weightUnit`, `loadType`, `barWeight`)
+  describing N identical sets at once (e.g. 3 series × 10 reps @ 60kg total). The
+  common case is a single group; varying weights use several (e.g. a heavier first
+  set, or a ramp). "Añadir grupo de series" adds a group; "Editar series individuales"
+  splits a group of N into N single-set groups for fully per-set editing.
 - **cardio** — `durationMinutes` and `distance` (+ `distanceUnit`, default "km").
 - **mobility** — just a comment.
 
 On save, `toEntryInput(draft)` converts each draft to the API `EntryInput`:
 
-- strength → `uniformToSets(line)` expands the uniform line into N identical
-  `SetInput` rows (`features/workouts/sets.ts`; clamped to **1–20** sets).
+- strength → `uniformLinesToSets(lines)` flattens the groups in order into `SetInput`
+  rows (`features/workouts/sets.ts`; **≤20** sets per group, **≤50** total per entry).
 - cardio → `durationSeconds = durationMinutes × 60`, plus `distance`/`distanceUnit`,
   with `sets: []`.
 - mobility → just the comment, `sets: []`.
 
-The `EntryEditor` form conditionally renders fields:
+When editing, `fromEntryDetail` does the inverse: `setsToUniformLines` run-length
+groups a saved entry's sets back into `lines`, so uniform **and** varying-weight
+workouts round-trip losslessly.
+
+The `EntryEditor` form conditionally renders fields per group:
 
 - `weight` is disabled when `loadType === "bodyweight"`.
 - the "Peso de la barra" (bar weight) field only appears for `loadType === "per_side"`.
+- the per-group header and remove button only appear once an entry has 2+ groups.
 
 Saving calls `useCreateWorkout().mutateAsync({...})` and navigates to the new
 workout's detail page. The save button is disabled with no entries or while pending.

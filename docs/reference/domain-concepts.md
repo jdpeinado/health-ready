@@ -100,7 +100,7 @@ Bodyweight sets contribute `null` load → they don't affect `bestTotalLoadKg` /
 | **Workout / Entrenamiento** | A dated training session (UI: "Hoy" for today's new one).                                                                                        |
 | **Entry**                   | One exercise performed inside a workout.                                                                                                         |
 | **Set / Serie**             | One bout of reps for a strength exercise.                                                                                                        |
-| **Uniform line**            | The web app's hybrid input: describe N identical sets once (e.g. 3×10 @ 60kg) instead of row-by-row. Expanded to individual sets on save (1–20). |
+| **Set group / Uniform line** | The web app's hybrid input: describe N identical sets once (e.g. 3×10 @ 60kg) instead of row-by-row (≤20/group). An entry holds one or more groups, so varying weights (heavier first set, ramps) are supported; flattened to individual sets on save (≤50/entry) and run-length grouped back when editing. |
 | **Load type**               | How a set's weight is loaded (total / per-side / per-dumbbell / bodyweight / +added).                                                            |
 | **Canonical load**          | A set's load normalized to total kilograms by `computeTotalLoadKg`.                                                                              |
 | **Volume**                  | `load × reps`, summed — total work for an exercise in a workout.                                                                                 |

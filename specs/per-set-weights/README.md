@@ -1,7 +1,7 @@
 # Per-Set Varying Weights — Spec
 
 **Date:** 2026-06-14
-**Status:** Planned
+**Status:** Implemented (2026-06-14)
 
 ## Purpose
 

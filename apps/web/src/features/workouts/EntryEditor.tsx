@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import type {
   ExerciseType,
   WeightUnit,
@@ -6,7 +6,12 @@ import type {
   EntryInput,
 } from "@health-ready/shared";
 import type { EntryDetail } from "../../api/types";
-import { uniformToSets, type UniformLine } from "./sets";
+import {
+  uniformLinesToSets,
+  setsToUniformLines,
+  type SetGroup,
+} from "./sets";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,8 +50,8 @@ export interface DraftEntry {
   exerciseName: string;
   exerciseType: ExerciseType;
   comment: string;
-  // strength
-  line: UniformLine;
+  // strength — one or more uniform set groups (varying weights = multiple groups)
+  lines: SetGroup[];
   // cardio
   durationMinutes: number | null;
   distance: number | null;
@@ -61,7 +66,7 @@ export function toEntryInput(d: DraftEntry): EntryInput {
       durationSeconds: null,
       distance: null,
       distanceUnit: null,
-      sets: uniformToSets(d.line),
+      sets: uniformLinesToSets(d.lines),
     };
   }
   if (d.exerciseType === "cardio") {
@@ -87,27 +92,18 @@ export function toEntryInput(d: DraftEntry): EntryInput {
 }
 
 // Inverse of `toEntryInput`: turn a saved entry back into an editable draft.
-// Strength sets are collapsed into a single uniform line (the app only ever
-// creates uniform sets, so this round-trips cleanly).
+// Strength sets are run-length grouped (see `setsToUniformLines`), so both uniform
+// and varying-weight workouts round-trip losslessly.
 export function fromEntryDetail(
   entry: EntryDetail,
   exercise: { name: string; type: ExerciseType },
 ): DraftEntry {
-  const first = entry.sets[0];
-  const line: UniformLine = {
-    count: entry.sets.length > 0 ? entry.sets.length : 1,
-    reps: first?.reps ?? null,
-    weight: first?.weight ?? null,
-    weightUnit: first?.weightUnit ?? "kg",
-    loadType: first?.loadType ?? "total",
-    barWeight: first?.barWeight ?? null,
-  };
   return {
     exerciseId: entry.exerciseId,
     exerciseName: exercise.name,
     exerciseType: exercise.type,
     comment: entry.comment ?? "",
-    line,
+    lines: setsToUniformLines(entry.sets),
     durationMinutes:
       entry.durationSeconds != null
         ? Math.round(entry.durationSeconds / 60)
@@ -115,6 +111,108 @@ export function fromEntryDetail(
     distance: entry.distance,
     distanceUnit: entry.distanceUnit ?? "km",
   };
+}
+
+const numOrNull = (v: string) => (v === "" ? null : Number(v));
+
+const EMPTY_GROUP: SetGroup = {
+  count: 1,
+  reps: null,
+  weight: null,
+  weightUnit: "kg",
+  loadType: "total",
+  barWeight: null,
+};
+
+// The editable fields for one uniform set group (series count, reps, weight, unit,
+// load type, optional bar weight). Reused for every group within a strength entry.
+function GroupFields({
+  group,
+  onChange,
+}: {
+  group: SetGroup;
+  onChange: (patch: Partial<SetGroup>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label>Series</Label>
+          <Input
+            type="number"
+            min={1}
+            value={group.count}
+            onChange={(e) => onChange({ count: Number(e.target.value) })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Reps</Label>
+          <Input
+            type="number"
+            min={0}
+            value={group.reps ?? ""}
+            onChange={(e) => onChange({ reps: numOrNull(e.target.value) })}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label>Peso</Label>
+          <Input
+            type="number"
+            step="0.5"
+            value={group.weight ?? ""}
+            disabled={group.loadType === "bodyweight"}
+            onChange={(e) => onChange({ weight: numOrNull(e.target.value) })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Unidad</Label>
+          <Select
+            value={group.weightUnit ?? "kg"}
+            onValueChange={(v) => onChange({ weightUnit: v as WeightUnit })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="kg">kg</SelectItem>
+              <SelectItem value="lb">lb</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label>Tipo de carga</Label>
+        <Select
+          value={group.loadType ?? "total"}
+          onValueChange={(v) => onChange({ loadType: v as LoadType })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {LOAD_TYPES.map((t) => (
+              <SelectItem key={t} value={t}>
+                {LOAD_TYPE_LABELS[t]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {group.loadType === "per_side" && (
+        <div className="space-y-1.5">
+          <Label>Peso de la barra</Label>
+          <Input
+            type="number"
+            step="0.5"
+            value={group.barWeight ?? ""}
+            onChange={(e) => onChange({ barWeight: numOrNull(e.target.value) })}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function EntryEditor({
@@ -129,9 +227,23 @@ export function EntryEditor({
   onRemove: () => void;
 }) {
   const set = (patch: Partial<DraftEntry>) => onChange({ ...entry, ...patch });
-  const setLine = (patch: Partial<UniformLine>) =>
-    set({ line: { ...entry.line, ...patch } });
-  const numOrNull = (v: string) => (v === "" ? null : Number(v));
+
+  const setGroup = (i: number, patch: Partial<SetGroup>) =>
+    set({ lines: entry.lines.map((g, j) => (j === i ? { ...g, ...patch } : g)) });
+  const addGroup = () =>
+    set({ lines: [...entry.lines, { ...(entry.lines[entry.lines.length - 1] ?? EMPTY_GROUP) }] });
+  const removeGroup = (i: number) =>
+    set({ lines: entry.lines.filter((_, j) => j !== i) });
+  // Split every group into individual single-set groups for per-set editing.
+  const splitIntoSets = () =>
+    set({
+      lines: entry.lines.flatMap((g) =>
+        Array.from({ length: Math.max(1, Math.floor(g.count || 1)) }, () => ({
+          ...g,
+          count: 1,
+        })),
+      ),
+    });
 
   return (
     <Card className="gap-0 overflow-hidden py-0">
@@ -159,90 +271,55 @@ export function EntryEditor({
 
       <CardContent className="space-y-3 py-4">
         {entry.exerciseType === "strength" && (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Series</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={entry.line.count}
-                  onChange={(e) => setLine({ count: Number(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Reps</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={entry.line.reps ?? ""}
-                  onChange={(e) => setLine({ reps: numOrNull(e.target.value) })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Peso</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={entry.line.weight ?? ""}
-                  disabled={entry.line.loadType === "bodyweight"}
-                  onChange={(e) =>
-                    setLine({ weight: numOrNull(e.target.value) })
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Unidad</Label>
-                <Select
-                  value={entry.line.weightUnit ?? "kg"}
-                  onValueChange={(v) =>
-                    setLine({ weightUnit: v as WeightUnit })
+          <div className="space-y-3">
+            {entry.lines.map((group, i) => {
+              const multi = entry.lines.length > 1;
+              return (
+                <div
+                  key={i}
+                  className={
+                    multi
+                      ? "space-y-3 rounded-xl border border-border bg-secondary/20 p-3"
+                      : "space-y-3"
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="kg">kg</SelectItem>
-                    <SelectItem value="lb">lb</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  {multi && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Grupo {i + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeGroup(i)}
+                        aria-label={`Quitar grupo ${i + 1}`}
+                        className="grid size-7 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  <GroupFields group={group} onChange={(patch) => setGroup(i, patch)} />
+                </div>
+              );
+            })}
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={addGroup}>
+                <Plus className="size-4" />
+                Añadir grupo de series
+              </Button>
+              {entry.lines.some((g) => g.count > 1) && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={splitIntoSets}
+                >
+                  Editar series individuales
+                </Button>
+              )}
             </div>
-            <div className="space-y-1.5">
-              <Label>Tipo de carga</Label>
-              <Select
-                value={entry.line.loadType ?? "total"}
-                onValueChange={(v) => setLine({ loadType: v as LoadType })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOAD_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {LOAD_TYPE_LABELS[t]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {entry.line.loadType === "per_side" && (
-              <div className="space-y-1.5">
-                <Label>Peso de la barra</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={entry.line.barWeight ?? ""}
-                  onChange={(e) =>
-                    setLine({ barWeight: numOrNull(e.target.value) })
-                  }
-                />
-              </div>
-            )}
-          </>
+          </div>
         )}
 
         {entry.exerciseType === "cardio" && (

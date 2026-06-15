@@ -4,6 +4,7 @@ import {
   createWorkoutSchema,
   updateWorkoutSchema,
   copyWorkoutSchema,
+  listWorkoutsQuerySchema,
 } from "@health-ready/shared";
 import { getDb } from "../db/client.js";
 import { requireAuth, type AppEnv } from "../middleware/auth.js";
@@ -21,14 +22,11 @@ export const workoutRoutes = new Hono<AppEnv>();
 
 workoutRoutes.use("*", requireAuth);
 
-workoutRoutes.get("/", async (c) => {
+workoutRoutes.get("/", zValidator("query", listWorkoutsQuerySchema), async (c) => {
   const db = getDb(c.env.DB);
   const userId = c.get("user").id;
-  const rows = await listWorkouts(db, userId, {
-    from: c.req.query("from"),
-    to: c.req.query("to"),
-    q: c.req.query("q"),
-  });
+  const { q, from, to } = c.req.valid("query");
+  const rows = await listWorkouts(db, userId, { q, from, to });
   return c.json(rows);
 });
 

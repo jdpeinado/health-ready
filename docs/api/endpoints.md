@@ -130,13 +130,17 @@ All routes require auth and are **scoped to the caller's user id**.
 
 ### `GET /workouts`
 
-**Auth:** auth · **Query:** `from`, `to` (ISO dates), `q` (name search)
+**Auth:** auth · **Query:** `from`, `to` (ISO `YYYY-MM-DD`), `q` (name search,
+trimmed, ≤100 chars). Validated by `listWorkoutsQuerySchema`; a malformed `from`/`to`
+→ `400`.
 
 Returns workout **summaries** (no entries), newest first (`date` desc, then
-`createdAt` desc). Filters:
+`createdAt` desc). Filters (all optional, combined with AND):
 
 - `from` / `to` → inclusive date range (`date >= from`, `date <= to`).
-- `q` → `LIKE %q%` on the workout `name`.
+- `q` → `LIKE %q%` on the workout `name`. Matches **named** workouts only —
+  unnamed sessions (shown as "Entrenamiento") are not surfaced by name search. Note
+  SQLite `LIKE` is case-insensitive for ASCII only.
 
 ```json
 [

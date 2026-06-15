@@ -130,6 +130,65 @@ describe("workouts routes", () => {
     expect(detail.entries).toHaveLength(20);
   });
 
+  describe("GET /workouts filters", () => {
+    async function seedThree(cookie: string, exId: string) {
+      await post(cookie, { date: "2026-01-10", name: "Push day", notes: null, entries: [{ exerciseId: exId, sets: [] }] });
+      await post(cookie, { date: "2026-03-15", name: "Pull day", notes: null, entries: [{ exerciseId: exId, sets: [] }] });
+      await post(cookie, { date: "2026-06-01", name: "Leg day", notes: null, entries: [{ exerciseId: exId, sets: [] }] });
+    }
+    async function names(cookie: string, qs: string): Promise<string[]> {
+      const res = await app.request(`/workouts${qs}`, { headers: { cookie } }, env);
+      expect(res.status).toBe(200);
+      const rows = await res.json<{ name: string }[]>();
+      return rows.map((r) => r.name);
+    }
+
+    it("filters by name substring (q), case-insensitive", async () => {
+      const { cookie } = await seedUser();
+      const exId = await seedExercise();
+      await seedThree(cookie, exId);
+      expect(await names(cookie, "?q=day")).toHaveLength(3);
+      expect(await names(cookie, "?q=pull")).toEqual(["Pull day"]);
+    });
+
+    it("filters by inclusive date range (from / to)", async () => {
+      const { cookie } = await seedUser();
+      const exId = await seedExercise();
+      await seedThree(cookie, exId);
+      expect(await names(cookie, "?from=2026-03-01")).toEqual(["Leg day", "Pull day"]);
+      expect(await names(cookie, "?to=2026-03-15")).toEqual(["Pull day", "Push day"]);
+      expect(await names(cookie, "?from=2026-03-01&to=2026-03-31")).toEqual(["Pull day"]);
+    });
+
+    it("combines q and date range (AND)", async () => {
+      const { cookie } = await seedUser();
+      const exId = await seedExercise();
+      await seedThree(cookie, exId);
+      expect(await names(cookie, "?q=day&from=2026-06-01")).toEqual(["Leg day"]);
+    });
+
+    it("returns all of the user's workouts when no filters are given", async () => {
+      const { cookie } = await seedUser();
+      const exId = await seedExercise();
+      await seedThree(cookie, exId);
+      expect(await names(cookie, "")).toHaveLength(3);
+    });
+
+    it("never leaks another user's workouts through filters", async () => {
+      const a = await seedUser();
+      const b = await seedUser();
+      const exId = await seedExercise();
+      await seedThree(a.cookie, exId);
+      expect(await names(b.cookie, "?q=day")).toHaveLength(0);
+    });
+
+    it("rejects a malformed date (400)", async () => {
+      const { cookie } = await seedUser();
+      const res = await app.request("/workouts?from=06-2026", { headers: { cookie } }, env);
+      expect(res.status).toBe(400);
+    });
+  });
+
   it("lists, updates, copies, and deletes", async () => {
     const { cookie } = await seedUser();
     const exId = await seedExercise();

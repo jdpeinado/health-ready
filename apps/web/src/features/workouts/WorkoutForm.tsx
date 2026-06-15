@@ -5,18 +5,12 @@ import type { Exercise } from "../../api/types";
 import { useExercises } from "../exercises/useExercises";
 import { useMe } from "../../auth/useAuth";
 import { CreateExerciseDialog } from "../exercises/CreateExerciseDialog";
+import { ExercisePicker } from "../exercises/ExercisePicker";
 import { EntryEditor, toEntryInput, type DraftEntry } from "./EntryEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 function prettyDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -85,18 +79,12 @@ export function WorkoutForm({
   const [date, setDate] = useState(initialDate);
   const [name, setName] = useState(initialName);
   const [entries, setEntries] = useState<DraftEntry[]>(initialEntries);
-  const [pick, setPick] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
-  function addExercise(id: string) {
-    const ex = exercises.data?.find((e) => e.id === id);
-    if (ex) setEntries((prev) => [...prev, draftFor(ex)]);
-    setPick("");
-  }
-
-  // Add a just-created exercise directly from the returned object — no need to wait
-  // for the catalog query to refetch.
-  function addCreatedExercise(ex: Exercise) {
+  // Append an exercise to the draft. Used by both the search picker and the
+  // (admin-only) inline create flow — the latter passes the just-created object
+  // directly so there's no need to wait for the catalog query to refetch.
+  function addExercise(ex: Exercise) {
     setEntries((prev) => [...prev, draftFor(ex)]);
   }
 
@@ -191,22 +179,10 @@ export function WorkoutForm({
       {/* Add exercise */}
       <Card>
         <CardContent className="space-y-2">
-          <Label className="flex items-center gap-1.5">
-            <Plus className="size-3.5" />
-            Agregar ejercicio
-          </Label>
-          <Select value={pick} onValueChange={(id) => addExercise(id)}>
-            <SelectTrigger>
-              <SelectValue placeholder="— elegir —" />
-            </SelectTrigger>
-            <SelectContent>
-              {exercises.data?.map((ex) => (
-                <SelectItem key={ex.id} value={ex.id}>
-                  {ex.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ExercisePicker
+            exercises={exercises.data ?? []}
+            onSelect={addExercise}
+          />
           {isAdmin && (
             <Button
               type="button"
@@ -225,7 +201,7 @@ export function WorkoutForm({
         <CreateExerciseDialog
           open={createOpen}
           onOpenChange={setCreateOpen}
-          onCreated={addCreatedExercise}
+          onCreated={addExercise}
         />
       )}
 

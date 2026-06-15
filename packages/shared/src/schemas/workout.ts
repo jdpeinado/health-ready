@@ -40,3 +40,17 @@ export type UpdateWorkoutInput = z.infer<typeof updateWorkoutSchema>;
 
 export const copyWorkoutSchema = z.object({ date: isoDate });
 export type CopyWorkoutInput = z.infer<typeof copyWorkoutSchema>;
+
+// Query params for GET /workouts. `q` is a name substring; `from`/`to` bound the
+// date range inclusively. A blank/whitespace `q` is treated as "no filter".
+export const listWorkoutsQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+});
+export type ListWorkoutsQuery = z.infer<typeof listWorkoutsQuerySchema>;

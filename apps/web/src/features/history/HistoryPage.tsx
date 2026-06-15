@@ -1,7 +1,10 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, ChevronRight, History, Layers } from "lucide-react";
+import { CalendarDays, ChevronRight, History, Layers, Search, X } from "lucide-react";
 import { useWorkouts } from "./useWorkouts";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 function prettyDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -14,7 +17,35 @@ function prettyDate(iso: string): string {
 }
 
 export function HistoryPage() {
-  const workouts = useWorkouts();
+  const [search, setSearch] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  // Debounce the free-text search so typing doesn't fire a request per keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQ(search.trim()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  const filters = useMemo(
+    () => ({
+      q: debouncedQ || undefined,
+      from: from || undefined,
+      to: to || undefined,
+    }),
+    [debouncedQ, from, to],
+  );
+  const hasFilters = Boolean(filters.q || filters.from || filters.to);
+
+  const workouts = useWorkouts(filters);
+
+  function clearFilters() {
+    setSearch("");
+    setDebouncedQ("");
+    setFrom("");
+    setTo("");
+  }
 
   return (
     <div className="animate-rise space-y-6">
@@ -22,6 +53,55 @@ export function HistoryPage() {
         <p className="eyebrow">Tu registro</p>
         <h1 className="page-title">Historial</h1>
       </header>
+
+      {/* Filter bar */}
+      <Card className="p-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-1.5">
+            <span className="text-xs font-medium text-muted-foreground">Buscar</span>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Buscar por nombre…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:flex">
+            <div className="space-y-1.5">
+              <span className="text-xs font-medium text-muted-foreground">Desde</span>
+              <Input
+                type="date"
+                aria-label="Desde"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-xs font-medium text-muted-foreground">Hasta</span>
+              <Input
+                type="date"
+                aria-label="Hasta"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            </div>
+          </div>
+          {hasFilters && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-muted-foreground sm:self-end"
+              onClick={clearFilters}
+            >
+              <X className="size-4" />
+              Limpiar
+            </Button>
+          )}
+        </div>
+      </Card>
 
       {workouts.isLoading && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -39,12 +119,25 @@ export function HistoryPage() {
           <span className="grid size-12 place-items-center rounded-full bg-secondary text-muted-foreground">
             <History className="size-5" />
           </span>
-          <p className="text-sm font-medium text-foreground">
-            Aún no hay entrenamientos
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Cuando guardes una sesión aparecerá aquí.
-          </p>
+          {hasFilters ? (
+            <>
+              <p className="text-sm font-medium text-foreground">
+                Ningún entrenamiento coincide con los filtros
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Prueba con otro nombre o rango de fechas.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-medium text-foreground">
+                Aún no hay entrenamientos
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Cuando guardes una sesión aparecerá aquí.
+              </p>
+            </>
+          )}
         </div>
       )}
 

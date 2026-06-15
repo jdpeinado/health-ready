@@ -27,7 +27,11 @@ wires `useCreateWorkout`; the same form powers
 form holds a **draft** workout in local state:
 
 - `date` (defaults to today via `todayIso()`), optional `name`.
-- `entries: DraftEntry[]` — added by picking from the exercise `Select`.
+- `entries: DraftEntry[]` — added via the **`ExercisePicker`**, a searchable combobox
+  (`components/ui/popover.tsx` + `command.tsx`, vendored from Radix Popover + `cmdk`).
+  It loads the full catalog client-side (`useExercises`) and filters as you type — no
+  server-side search, since a personal catalog is small. Picking an exercise appends a
+  draft entry for it.
 - **Inline exercise creation (admin only):** when `useMe().data?.role === "admin"`,
   a "Crear ejercicio" button appears under the picker and opens `CreateExerciseDialog`
   (a vendored Radix `Dialog`). On success the exercise is created via
@@ -74,12 +78,19 @@ workout's detail page. The save button is disabled with no entries or while pend
 
 ## History (`/history`) — `features/history/HistoryPage.tsx`
 
-A responsive grid of workout cards from `useWorkouts()` (`GET /workouts`, newest
+A responsive grid of workout cards from `useWorkouts(filters)` (`GET /workouts`, newest
 first). Each card links to `/workouts/:id` and shows the name (or "Entrenamiento"),
 the pretty-printed date, and the exercise count (`entryCount`).
 
-States: a skeleton grid while loading; an empty-state panel when there are no
-workouts.
+- **Filter bar** — a search `Input` (debounced ~300 ms into the `q` param) plus two
+  date inputs, **Desde** / **Hasta** (`from` / `to`, an inclusive range). The filters
+  are part of the query key so each combination caches independently. A **Limpiar**
+  button appears when any filter is active. Name search matches named workouts only
+  (server-side `LIKE` on `name`).
+
+States: a skeleton grid while loading; a "no workouts at all" empty state; and a
+distinct "Ningún entrenamiento coincide con los filtros" empty state when filters are
+active but match nothing.
 
 ---
 

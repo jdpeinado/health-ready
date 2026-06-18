@@ -6,11 +6,13 @@ import type {
   UpdateWorkoutInput,
 } from "@health-ready/shared";
 
-// D1 allows at most ~100 bound parameters per SQL statement. `workout_entries`
-// and `sets` are inserted with 8 columns each, so a single multi-row INSERT of
-// more than ~12 rows exceeds the limit ("too many SQL variables"). Cap each
-// INSERT at 10 rows (80 params) and split larger sets across statements.
+// D1 allows at most ~100 bound parameters per SQL statement. `sets` is inserted
+// with 8 columns and `workout_entries` with 10 columns, so a single multi-row
+// INSERT of too many rows exceeds the limit ("too many SQL variables"). Cap each
+// INSERT and split larger lists across statements: sets at 10 rows (80 params),
+// entries at 8 rows (80 params).
 const INSERT_CHUNK = 10;
+const ENTRY_INSERT_CHUNK = 8; // workout_entries has 10 columns → 8 rows = 80 params
 
 function chunk<T>(rows: T[], size = INSERT_CHUNK): T[][] {
   const out: T[][] = [];
@@ -51,6 +53,8 @@ function buildInserts(workoutId: string, userId: string, input: CreateWorkoutInp
       durationSeconds: entry.durationSeconds ?? null,
       distance: entry.distance ?? null,
       distanceUnit: entry.distanceUnit ?? null,
+      groupId: entry.groupId ?? null,
+      groupType: entry.groupType ?? null,
     });
     (entry.sets ?? []).forEach((s, j) => {
       setRows.push({
@@ -76,7 +80,7 @@ export async function createWorkout(
   const workoutId = crypto.randomUUID();
   const { workoutRow, entryRows, setRows } = buildInserts(workoutId, userId, input);
   const stmts: any[] = [db.insert(workouts).values(workoutRow)];
-  for (const c of chunk(entryRows)) stmts.push(db.insert(workoutEntries).values(c));
+  for (const c of chunk(entryRows, ENTRY_INSERT_CHUNK)) stmts.push(db.insert(workoutEntries).values(c));
   for (const c of chunk(setRows)) stmts.push(db.insert(sets).values(c));
   await db.batch(stmts as [any, ...any[]]);
   return workoutId;
@@ -91,6 +95,8 @@ export interface SetDetail {
 export interface EntryDetail {
   id: string; exerciseId: string; orderIndex: number; comment: string | null;
   durationSeconds: number | null; distance: number | null; distanceUnit: string | null;
+  groupId: string | null;
+  groupType: "biserie" | "triserie" | "superserie" | "circuito" | null;
   sets: SetDetail[];
 }
 export interface WorkoutSummary {
@@ -135,6 +141,7 @@ export async function getWorkout(
   const entries: EntryDetail[] = entryRows.map((e) => ({
     id: e.id, exerciseId: e.exerciseId, orderIndex: e.orderIndex, comment: e.comment,
     durationSeconds: e.durationSeconds, distance: e.distance, distanceUnit: e.distanceUnit,
+    groupId: e.groupId, groupType: e.groupType,
     sets: setsByEntry.get(e.id) ?? [],
   }));
 
@@ -207,7 +214,7 @@ export async function replaceWorkout(
     const { entryRows, setRows } = buildInserts(workoutId, userId, {
       date: input.date ?? "2000-01-01", entries: input.entries,
     } as CreateWorkoutInput);
-    for (const c of chunk(entryRows)) stmts.push(db.insert(workoutEntries).values(c));
+    for (const c of chunk(entryRows, ENTRY_INSERT_CHUNK)) stmts.push(db.insert(workoutEntries).values(c));
     for (const c of chunk(setRows)) stmts.push(db.insert(sets).values(c));
   }
   if (stmts.length > 0) {
@@ -239,6 +246,12 @@ export async function copyWorkout(
 ): Promise<string | null> {
   const source = await getWorkout(db, userId, sourceId);
   if (!source) return null;
+  const groupIdMap = new Map<string, string>();
+  for (const e of source.entries) {
+    if (e.groupId && !groupIdMap.has(e.groupId)) {
+      groupIdMap.set(e.groupId, crypto.randomUUID());
+    }
+  }
   return createWorkout(db, userId, {
     date: newDate,
     name: source.name,
@@ -249,6 +262,8 @@ export async function copyWorkout(
       durationSeconds: e.durationSeconds,
       distance: e.distance,
       distanceUnit: e.distanceUnit,
+      groupId: e.groupId ? groupIdMap.get(e.groupId)! : null,
+      groupType: e.groupType,
       sets: e.sets.map((s) => ({
         reps: s.reps, weight: s.weight, weightUnit: s.weightUnit,
         loadType: s.loadType, barWeight: s.barWeight,

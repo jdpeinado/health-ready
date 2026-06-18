@@ -17,3 +17,11 @@ export const loadTypeSchema = z.enum([
   "bodyweight_added",
 ]);
 export type LoadType = z.infer<typeof loadTypeSchema>;
+
+export const groupTypeSchema = z.enum([
+  "biserie",
+  "triserie",
+  "superserie",
+  "circuito",
+]);
+export type GroupType = z.infer<typeof groupTypeSchema>;

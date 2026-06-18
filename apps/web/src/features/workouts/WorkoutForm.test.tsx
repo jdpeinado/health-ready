@@ -33,7 +33,7 @@ function renderForm() {
     <WorkoutForm
       initialDate="2026-06-14"
       initialName=""
-      initialEntries={[]}
+      initialBlocks={[]}
       eyebrow="Nueva sesión"
       title="Nuevo entrenamiento"
       submitLabel="Guardar"
@@ -84,5 +84,12 @@ describe("WorkoutForm — inline create exercise", () => {
 
     // The new exercise appears as an entry in the form.
     expect(await screen.findByText("Sentadilla")).toBeInTheDocument();
+  });
+
+  it("adds a bi/tri-series container when a type is selected", async () => {
+    renderForm();
+    fireEvent.click(screen.getByText("Añadir serie agrupada"));
+    fireEvent.click(await screen.findByRole("option", { name: "Tri-serie" }));
+    expect(await screen.findByText("Tri-serie")).toBeInTheDocument();
   });
 });

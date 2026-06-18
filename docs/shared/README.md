@@ -53,12 +53,20 @@ The nested workout shape, built bottom-up:
   Numbers are non-negative; `reps` is an integer. All fields are `nullish`
   (optional/nullable).
 - **`entryInputSchema`** — `{ exerciseId (min 1), comment?, durationSeconds?,
-distance?, distanceUnit?, sets: SetInput[] (default []) }`.
+distance?, distanceUnit?, sets: SetInput[] (default []), groupId?, groupType? }`.
+  `groupType` is the `groupTypeSchema` enum (`biserie` | `triserie` | `superserie` |
+  `circuito`). `groupId` + `groupType` link entries into a bi/tri-series (see
+  [data model](../architecture/data-model.md#workout_entries)).
 - **`createWorkoutSchema`** — `{ date: "YYYY-MM-DD", name?, notes?, entries:
 EntryInput[] (default []) }`. `date` is regex-validated to `^\d{4}-\d{2}-\d{2}$`.
 - **`updateWorkoutSchema`** — `date?`, `name?`, `notes?`, `entries?`. **When
   `entries` is present it replaces all entries** (documented inline in the schema and
   enforced in [`replaceWorkout`](../api/services.md#replaceworkout)).
+
+Both create/update schemas run a `superRefine` (`refineGroups`) that enforces the
+grouping rules: entries sharing a `groupId` must be **contiguous**, carry one
+consistent `groupType`, and number **≥2**; a standalone entry (no `groupId`) must not
+carry a `groupType`. Violations return `400`.
 - **`copyWorkoutSchema`** — `{ date: "YYYY-MM-DD" }`.
 
 Inferred types: `SetInput`, `EntryInput`, `CreateWorkoutInput`, `UpdateWorkoutInput`,

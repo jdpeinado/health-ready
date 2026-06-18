@@ -74,6 +74,22 @@ The `EntryEditor` form conditionally renders fields per group:
 Saving calls `useCreateWorkout().mutateAsync({...})` and navigates to the new
 workout's detail page. The save button is disabled with no entries or while pending.
 
+### Grouping exercises into bi/tri-series
+
+The form models the workout as an ordered list of **blocks** (`features/workouts/blocks.ts`):
+each block is either a standalone exercise or a **group** (bi-series / tri-series /
+superserie / circuito) holding 2+ exercises. **"Añadir serie agrupada"** picks a group
+type and appends an empty group container; each group has its own embedded
+`ExercisePicker` to add exercises into it ("container first").
+
+On save, `blocksToEntries` flattens the blocks to the ordered `EntryInput[]`,
+assigning every entry in a group the same client-generated `groupId` plus the group's
+`groupType`. Standalone exercises get `groupId: null`. A group left with **<2**
+exercises is degraded to standalone entries, and empty groups are dropped — so a
+normal save never trips the API's "≥2 entries per group" validation. When editing,
+`entriesToBlocks` does the inverse, collapsing consecutive entries that share a
+`groupId` back into a group block.
+
 ---
 
 ## History (`/history`) — `features/history/HistoryPage.tsx`
@@ -106,6 +122,9 @@ Shows one workout in full, plus actions.
   - weighted → `"10 reps · 60kg"`, with ` + barra X` for bar weight and a suffix like
     `(por lado)` / `(por mancuerna)` / `(corporal + lastre)` based on `loadType`.
   - cardio entries instead render minutes and distance.
+- **Grouped series** — consecutive entries sharing a `groupId` are collapsed into one
+  bordered card labelled by `groupType` ("Bi-serie", "Tri-serie", …); standalone
+  entries render as individual cards.
 - **Edit** — an "Editar entrenamiento" button links to `/workouts/:id/edit` (see
   below).
 - **Copy** — pick a date and `useCopyWorkout()` duplicates the whole session to that

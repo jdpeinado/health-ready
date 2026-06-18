@@ -21,10 +21,17 @@ three row sets: the `workoutRow`, an array of `entryRows`, and an array of `setR
 - Each entry gets a fresh UUID and an `orderIndex` equal to its array position.
 - Each set gets a fresh UUID and a `setIndex` equal to its array position within the
   entry.
-- Optional fields are coalesced to `null` (`?? null`).
+- Optional fields are coalesced to `null` (`?? null`) — including `groupId` /
+  `groupType`, which carry bi/tri-series grouping (see
+  [data model](../architecture/data-model.md#workout_entries)).
 
 This builder is reused by both `createWorkout` and `replaceWorkout`, so create and
 replace produce identical row structures.
+
+> **D1 parameter limit:** D1 caps a statement at ~100 bound parameters. `sets` has 8
+> columns and `workout_entries` has 10, so the multi-row inserts are chunked —
+> `INSERT_CHUNK` = 10 rows for sets (80 params), `ENTRY_INSERT_CHUNK` = 8 rows for
+> entries (80 params).
 
 ### `validateExerciseIds(db, ids) → string[]`
 
@@ -86,8 +93,9 @@ Ownership check, then `delete` the workout row — cascades remove its entries a
 
 Reads the source via `getWorkout` (so it's ownership-checked), then calls
 `createWorkout` with a deep copy of name, notes, entries, and sets, but with the new
-`date`. New UUIDs are minted for everything. Returns the new id, or `null` (→ `404`)
-if the source is missing.
+`date`. New UUIDs are minted for everything. Each source `group_id` is mapped to a
+fresh UUID (so the copy keeps its bi/tri-series grouping but owns its own ids).
+Returns the new id, or `null` (→ `404`) if the source is missing.
 
 ### Returned types
 

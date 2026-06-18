@@ -3,7 +3,8 @@ import { useWorkout } from "../history/useWorkouts";
 import { useExercises } from "../exercises/useExercises";
 import { useUpdateWorkout } from "./useWorkoutMutations";
 import { WorkoutForm } from "./WorkoutForm";
-import { fromEntryDetail, type DraftEntry } from "./EntryEditor";
+import { fromEntryDetail } from "./EntryEditor";
+import { entriesToBlocks } from "./blocks";
 
 export function EditWorkoutPage() {
   const { id = "" } = useParams();
@@ -20,7 +21,7 @@ export function EditWorkoutPage() {
   const w = workout.data;
   const byId = new Map(exercises.data?.map((ex) => [ex.id, ex]) ?? []);
 
-  const initialEntries: DraftEntry[] = w.entries.map((e) => {
+  const initialBlocks = entriesToBlocks(w.entries, (e) => {
     const ex = byId.get(e.exerciseId);
     return fromEntryDetail(e, {
       name: ex?.name ?? "Ejercicio",
@@ -32,7 +33,7 @@ export function EditWorkoutPage() {
     <WorkoutForm
       initialDate={w.date}
       initialName={w.name ?? ""}
-      initialEntries={initialEntries}
+      initialBlocks={initialBlocks}
       eyebrow="Editar sesión"
       title="Editar entrenamiento"
       submitLabel="Guardar cambios"

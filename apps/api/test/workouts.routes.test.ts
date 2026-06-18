@@ -43,6 +43,32 @@ describe("workouts routes", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects a group with only one entry (400)", async () => {
+    const { cookie } = await seedUser();
+    const exId = await seedExercise();
+    const res = await post(cookie, {
+      date: "2026-05-02", name: null, notes: null,
+      entries: [
+        { exerciseId: exId, sets: [], groupId: "g1", groupType: "biserie" },
+      ],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects mixed groupType within one groupId (400)", async () => {
+    const { cookie } = await seedUser();
+    const a = await seedExercise({ name: "Press" });
+    const b = await seedExercise({ name: "Remo" });
+    const res = await post(cookie, {
+      date: "2026-05-02", name: null, notes: null,
+      entries: [
+        { exerciseId: a, sets: [], groupId: "g1", groupType: "biserie" },
+        { exerciseId: b, sets: [], groupId: "g1", groupType: "triserie" },
+      ],
+    });
+    expect(res.status).toBe(400);
+  });
+
   it("does not leak another user's workout (404)", async () => {
     const owner = await seedUser();
     const other = await seedUser();

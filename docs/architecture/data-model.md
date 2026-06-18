@@ -103,9 +103,21 @@ more than once).
 | `duration_seconds` | integer, nullable | cardio: time                               |
 | `distance`         | real, nullable    | cardio: distance                           |
 | `distance_unit`    | text, nullable    | cardio: e.g. "km"                          |
+| `group_id`         | text, nullable    | groups entries into a bi/tri-series (see below) |
+| `group_type`       | text, nullable    | enum: `biserie`, `triserie`, `superserie`, `circuito` |
 
 The cardio fields (`duration_seconds`, `distance`, `distance_unit`) live on the
 **entry**, not on sets — cardio entries have no sets.
+
+**Exercise grouping (bi/tri-series).** Entries performed alternately as a
+bi-series / tri-series share one `group_id` (a UUID) and carry the same `group_type`
+label. A `null` `group_id` is a standalone exercise. Grouped entries are always
+**contiguous** in `order_index`, and a group has **≥2** entries. The sets stay on
+each entry exactly as for standalone exercises — grouping is a presentational layer,
+so the "rounds" remain implicit in set order. Validation (shared
+`createWorkoutSchema` / `updateWorkoutSchema`) enforces contiguity, a single
+`group_type` per `group_id`, and the ≥2 rule. Copying a workout regenerates each
+`group_id` so the copy owns its own ids.
 
 ### `sets`
 

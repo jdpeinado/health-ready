@@ -11,6 +11,8 @@ function baseEntry(overrides: Partial<EntryDetail> = {}): EntryDetail {
     durationSeconds: null,
     distance: null,
     distanceUnit: null,
+    groupId: null,
+    groupType: null,
     sets: [],
     ...overrides,
   };

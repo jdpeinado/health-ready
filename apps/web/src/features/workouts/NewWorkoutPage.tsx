@@ -17,7 +17,7 @@ export function NewWorkoutPage() {
     <WorkoutForm
       initialDate={todayIso()}
       initialName=""
-      initialEntries={[]}
+      initialBlocks={[]}
       eyebrow="Sesión de hoy"
       title="Nuevo entrenamiento"
       submitLabel="Guardar entrenamiento"

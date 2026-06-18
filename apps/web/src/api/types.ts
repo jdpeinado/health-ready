@@ -3,6 +3,7 @@ import type {
   WeightUnit,
   LoadType,
   Role,
+  GroupType,
 } from "@health-ready/shared";
 
 export interface Exercise {
@@ -32,6 +33,8 @@ export interface EntryDetail {
   durationSeconds: number | null;
   distance: number | null;
   distanceUnit: string | null;
+  groupId: string | null;
+  groupType: GroupType | null;
   sets: SetDetail[];
 }
 

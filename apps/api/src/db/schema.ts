@@ -54,6 +54,10 @@ export const workoutEntries = sqliteTable("workout_entries", {
   durationSeconds: integer("duration_seconds"),
   distance: real("distance"),
   distanceUnit: text("distance_unit"),
+  groupId: text("group_id"),
+  groupType: text("group_type", {
+    enum: ["biserie", "triserie", "superserie", "circuito"],
+  }),
 });
 
 export const sets = sqliteTable("sets", {

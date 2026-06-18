@@ -6,6 +6,7 @@ import {
   getWorkout,
   listWorkouts,
   validateExerciseIds,
+  copyWorkout,
 } from "../src/services/workouts.js";
 import { seedUser, seedExercise } from "./helpers.js";
 
@@ -79,5 +80,53 @@ describe("workout service", () => {
     const exId = await seedExercise();
     expect(await validateExerciseIds(db, [exId])).toEqual([]);
     expect(await validateExerciseIds(db, [exId, "nope"])).toEqual(["nope"]);
+  });
+
+  it("round-trips grouped entries (groupId + groupType)", async () => {
+    const db = getDb(env.DB);
+    const { id: userId } = await seedUser();
+    const a = await seedExercise({ name: "Press" });
+    const b = await seedExercise({ name: "Remo" });
+
+    const workoutId = await createWorkout(db, userId, {
+      date: "2026-05-02",
+      name: "Superset day",
+      notes: null,
+      entries: [
+        { exerciseId: a, comment: null, durationSeconds: null, distance: null, distanceUnit: null, sets: [], groupId: "g1", groupType: "biserie" },
+        { exerciseId: b, comment: null, durationSeconds: null, distance: null, distanceUnit: null, sets: [], groupId: "g1", groupType: "biserie" },
+      ],
+    });
+
+    const detail = await getWorkout(db, userId, workoutId);
+    const e0 = detail?.entries[0];
+    const e1 = detail?.entries[1];
+    expect(e0?.groupId).toBe("g1");
+    expect(e0?.groupType).toBe("biserie");
+    expect(e1?.groupId).toBe("g1");
+    expect(e1?.groupType).toBe("biserie");
+  });
+
+  it("copyWorkout regenerates groupId but keeps the grouping", async () => {
+    const db = getDb(env.DB);
+    const { id: userId } = await seedUser();
+    const a = await seedExercise({ name: "Press" });
+    const b = await seedExercise({ name: "Remo" });
+
+    const srcId = await createWorkout(db, userId, {
+      date: "2026-05-02", name: null, notes: null,
+      entries: [
+        { exerciseId: a, comment: null, durationSeconds: null, distance: null, distanceUnit: null, sets: [], groupId: "g1", groupType: "triserie" },
+        { exerciseId: b, comment: null, durationSeconds: null, distance: null, distanceUnit: null, sets: [], groupId: "g1", groupType: "triserie" },
+      ],
+    });
+
+    const newId = await copyWorkout(db, userId, srcId, "2026-05-09");
+    const copy = await getWorkout(db, userId, newId!);
+    const c0 = copy?.entries[0];
+    const c1 = copy?.entries[1];
+    expect(c0?.groupType).toBe("triserie");
+    expect(c0?.groupId).not.toBe("g1"); // regenerated
+    expect(c0?.groupId).toBe(c1?.groupId); // still grouped together
   });
 });

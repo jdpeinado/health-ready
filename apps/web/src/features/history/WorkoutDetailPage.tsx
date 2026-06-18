@@ -18,6 +18,13 @@ const LOAD_SUFFIX: Record<string, string> = {
   bodyweight_added: "corporal + lastre",
 };
 
+const GROUP_TYPE_LABELS: Record<string, string> = {
+  biserie: "Bi-serie",
+  triserie: "Tri-serie",
+  superserie: "Superserie",
+  circuito: "Circuito",
+};
+
 function setLabel(s: {
   reps: number | null;
   weight: number | null;
@@ -73,6 +80,18 @@ export function WorkoutDetailPage() {
     navigate("/history");
   }
 
+  // Collapse consecutive entries sharing a groupId into render groups.
+  type RenderGroup = { groupId: string | null; groupType: string | null; entries: typeof w.entries };
+  const renderGroups: RenderGroup[] = [];
+  for (const e of w.entries) {
+    const last = renderGroups[renderGroups.length - 1];
+    if (e.groupId != null && last && last.groupId === e.groupId) {
+      last.entries.push(e);
+    } else {
+      renderGroups.push({ groupId: e.groupId, groupType: e.groupType, entries: [e] });
+    }
+  }
+
   return (
     <div className="animate-rise space-y-6">
       <header className="space-y-3">
@@ -95,49 +114,64 @@ export function WorkoutDetailPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
         {/* Entries */}
         <div className="space-y-3">
-          {w.entries.map((e, i) => (
-            <Card key={e.id} className="gap-0 py-0">
-              <div className="flex items-center gap-3 border-b border-border bg-secondary/40 px-4 py-3">
-                <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/15 font-mono text-xs font-bold text-primary">
-                  {i + 1}
+          {renderGroups.map((g, gi) => {
+            const cards = g.entries.map((e, i) => (
+              <Card key={e.id} className="gap-0 py-0">
+                <div className="flex items-center gap-3 border-b border-border bg-secondary/40 px-4 py-3">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/15 font-mono text-xs font-bold text-primary">
+                    {i + 1}
+                  </span>
+                  <strong className="truncate font-display font-bold">
+                    {nameById.get(e.exerciseId) ?? "Ejercicio"}
+                  </strong>
+                </div>
+                <CardContent className="space-y-2 py-4">
+                  {e.comment && (
+                    <p className="text-sm italic text-muted-foreground">
+                      “{e.comment}”
+                    </p>
+                  )}
+                  {e.sets.map((s, si) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {String(si + 1).padStart(2, "0")}
+                      </span>
+                      <span className="h-px flex-1 bg-border" />
+                      <span className="font-mono font-medium tabular-nums">
+                        {setLabel(s)}
+                      </span>
+                    </div>
+                  ))}
+                  {e.durationSeconds != null && (
+                    <div className="font-mono text-sm font-medium">
+                      {Math.round(e.durationSeconds / 60)} min
+                    </div>
+                  )}
+                  {e.distance != null && (
+                    <div className="font-mono text-sm font-medium">
+                      {e.distance} {e.distanceUnit}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ));
+
+            if (g.groupId == null) return <div key={gi}>{cards}</div>;
+            return (
+              <div
+                key={gi}
+                className="space-y-2 rounded-2xl border border-primary/40 bg-primary/5 p-3"
+              >
+                <span className="font-display text-xs font-bold uppercase tracking-wide text-primary">
+                  {GROUP_TYPE_LABELS[g.groupType ?? ""] ?? "Serie"}
                 </span>
-                <strong className="truncate font-display font-bold">
-                  {nameById.get(e.exerciseId) ?? "Ejercicio"}
-                </strong>
+                {cards}
               </div>
-              <CardContent className="space-y-2 py-4">
-                {e.comment && (
-                  <p className="text-sm italic text-muted-foreground">
-                    “{e.comment}”
-                  </p>
-                )}
-                {e.sets.map((s, si) => (
-                  <div
-                    key={s.id}
-                    className="flex items-center gap-3 text-sm"
-                  >
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {String(si + 1).padStart(2, "0")}
-                    </span>
-                    <span className="h-px flex-1 bg-border" />
-                    <span className="font-mono font-medium tabular-nums">
-                      {setLabel(s)}
-                    </span>
-                  </div>
-                ))}
-                {e.durationSeconds != null && (
-                  <div className="font-mono text-sm font-medium">
-                    {Math.round(e.durationSeconds / 60)} min
-                  </div>
-                )}
-                {e.distance != null && (
-                  <div className="font-mono text-sm font-medium">
-                    {e.distance} {e.distanceUnit}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+            );
+          })}
         </div>
 
         {/* Actions sidebar */}
